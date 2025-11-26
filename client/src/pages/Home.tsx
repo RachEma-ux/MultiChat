@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
-  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2
+  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -61,6 +61,13 @@ const MODEL_PRESETS = {
   'Fast Responders': ['anthropic:Claude Haiku 4.5', 'openai:GPT-3.5 Turbo', 'kimi:Kimi Chat']
 };
 
+interface Attachment {
+  name: string;
+  type: string;
+  size: number;
+  url: string;
+}
+
 interface Message {
   id: number;
   type: 'user' | 'ai' | 'synthesis';
@@ -73,6 +80,15 @@ interface Message {
   responseTime?: number;
   visible?: boolean;
   sources?: number;
+  attachments?: Attachment[];
+}
+
+interface SavedConversation {
+  id: string;
+  messages: Message[];
+  selectedModels: string[];
+  timestamp: string;
+  title: string;
 }
 
 export default function Home() {
@@ -87,7 +103,10 @@ export default function Home() {
   const [collapsedResponses, setCollapsedResponses] = useState(new Set<number>());
   const [currentConversationTitle, setCurrentConversationTitle] = useState('New Chat');
   const [showPresets, setShowPresets] = useState(false);
+  const [savedConversations, setSavedConversations] = useState<SavedConversation[]>([]);
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -96,6 +115,36 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    loadConversations();
+  }, []);
+
+  const loadConversations = () => {
+    try {
+      const saved: SavedConversation[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('conversation:')) {
+          const data = localStorage.getItem(key);
+          if (data) {
+            const parsed = JSON.parse(data);
+            // Convert timestamp strings back to Date objects
+            parsed.messages = parsed.messages.map((msg: any) => ({
+              ...msg,
+              timestamp: new Date(msg.timestamp)
+            }));
+            saved.push(parsed);
+          }
+        }
+      }
+      // Sort by timestamp, newest first
+      saved.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setSavedConversations(saved);
+    } catch (error) {
+      console.error('Error loading conversations:', error);
+    }
+  };
 
   const toggleModel = (provider: string, model: string) => {
     const modelKey = `${provider}:${model}`;
@@ -110,6 +159,36 @@ export default function Home() {
     setSelectedModels(MODEL_PRESETS[presetName as keyof typeof MODEL_PRESETS]);
     setShowPresets(false);
     toast.success(`Applied preset: ${presetName}`);
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newAttachments: Attachment[] = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      // Create a local URL for the file
+      const url = URL.createObjectURL(file);
+      newAttachments.push({
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        url
+      });
+    }
+    setAttachments(prev => [...prev, ...newAttachments]);
+    toast.success(`${newAttachments.length} file(s) attached`);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => {
+      const newAttachments = [...prev];
+      // Revoke the URL to free memory
+      URL.revokeObjectURL(newAttachments[index].url);
+      newAttachments.splice(index, 1);
+      return newAttachments;
+    });
   };
 
   const simulateAIResponse = async (provider: string, model: string, userMessage: string) => {
@@ -170,12 +249,14 @@ export default function Home() {
       id: Date.now(),
       type: 'user',
       content: inputMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
+      attachments: attachments.length > 0 ? [...attachments] : undefined
     };
 
     setMessages(prev => [...prev, userMsg]);
     const currentInput = inputMessage;
     setInputMessage('');
+    setAttachments([]);
     setIsLoading(true);
 
     const aiResponses: Message[] = [];
@@ -263,9 +344,12 @@ export default function Home() {
     }
 
     const convoId = `conversation:${Date.now()}`;
-    const convoData = {
+    const convoData: SavedConversation = {
       id: convoId,
-      messages,
+      messages: messages.map(msg => ({
+        ...msg,
+        timestamp: msg.timestamp.toISOString() as any // Store as ISO string
+      })) as any,
       selectedModels,
       timestamp: new Date().toISOString(),
       title: currentConversationTitle || `Chat ${new Date().toLocaleString()}`
@@ -273,9 +357,29 @@ export default function Home() {
     
     try {
       localStorage.setItem(convoId, JSON.stringify(convoData));
-      toast.success('Conversation saved successfully!');
+      loadConversations(); // Reload the list
+      toast.success('✅ Conversation saved successfully!');
     } catch (error) {
-      toast.error('Failed to save conversation');
+      console.error('Save error:', error);
+      toast.error('❌ Failed to save conversation');
+    }
+  };
+
+  const loadConversation = (convo: SavedConversation) => {
+    setMessages(convo.messages);
+    setSelectedModels(convo.selectedModels);
+    setCurrentConversationTitle(convo.title);
+    setShowMenu(false);
+    toast.success('Conversation loaded');
+  };
+
+  const deleteConversation = (convoId: string) => {
+    try {
+      localStorage.removeItem(convoId);
+      loadConversations();
+      toast.success('Conversation deleted');
+    } catch (error) {
+      toast.error('Failed to delete conversation');
     }
   };
 
@@ -310,9 +414,9 @@ export default function Home() {
         URL.revokeObjectURL(url);
       }, 100);
       
-      toast.success('Conversation exported!');
+      toast.success('✅ Conversation exported!');
     } catch (error) {
-      toast.error('Export failed');
+      toast.error('❌ Export failed');
     }
   };
 
@@ -328,27 +432,35 @@ export default function Home() {
 
   const analytics = getAnalytics();
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
   return (
     <div className="flex h-screen bg-background text-foreground relative">
       <div className="flex-1 flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between p-3 md:p-4 border-b border-border">
+          <div className="flex items-center gap-2 md:gap-4 min-w-0">
             <Button 
               variant="ghost"
               size="icon"
               onClick={() => setShowMenu(!showMenu)}
+              className="shrink-0"
             >
               <Menu className="h-5 w-5" />
             </Button>
-            <h1 className="text-xl font-semibold">{currentConversationTitle}</h1>
+            <h1 className="text-base md:text-xl font-semibold truncate">{currentConversationTitle}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 md:gap-2 shrink-0">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setShowAnalytics(!showAnalytics)}
               title="Toggle Analytics"
+              className="hidden md:inline-flex"
             >
               <BarChart className="h-5 w-5" />
             </Button>
@@ -367,12 +479,14 @@ export default function Home() {
               onClick={exportConversation}
               disabled={messages.length === 0}
               title="Export to JSON"
+              className="hidden sm:inline-flex"
             >
               <Download className="h-5 w-5" />
             </Button>
             <Button
               onClick={() => setShowModelSelector(!showModelSelector)}
               size="sm"
+              className="hidden sm:inline-flex"
             >
               <Plus className="h-4 w-4 mr-2" />
               Add Model
@@ -387,7 +501,7 @@ export default function Home() {
               className="fixed inset-0 z-40"
               onClick={() => setShowMenu(false)}
             />
-            <div className="absolute top-16 left-4 w-72 bg-card rounded-lg shadow-2xl z-50 border border-border">
+            <div className="absolute top-14 md:top-16 left-2 md:left-4 w-80 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl z-50 border border-border max-h-[80vh] overflow-y-auto">
               <div className="p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-semibold">Menu</h2>
@@ -400,7 +514,42 @@ export default function Home() {
                   </Button>
                 </div>
                 
-                <div className="space-y-2">
+                {/* Saved Conversations */}
+                {savedConversations.length > 0 && (
+                  <div className="mb-4">
+                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Saved Conversations</h3>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {savedConversations.map((convo) => (
+                        <div key={convo.id} className="flex items-center gap-2">
+                          <Button
+                            variant="ghost"
+                            className="flex-1 justify-start text-left h-auto py-2"
+                            onClick={() => loadConversation(convo)}
+                          >
+                            <div className="min-w-0">
+                              <div className="font-medium truncate">{convo.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(convo.timestamp).toLocaleDateString()} • {convo.messages?.length || 0} msgs
+                              </div>
+                            </div>
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(convo.id);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-2 border-t border-border pt-4">
                   <Button
                     variant="ghost"
                     className="w-full justify-start"
@@ -415,11 +564,24 @@ export default function Home() {
                   </Button>
                   <Button
                     variant="ghost"
+                    className="w-full justify-start md:hidden"
+                    onClick={() => {
+                      setShowAnalytics(!showAnalytics);
+                      setShowMenu(false);
+                    }}
+                  >
+                    <BarChart className="h-4 w-4 mr-2" />
+                    Toggle Analytics
+                  </Button>
+                  <Button
+                    variant="ghost"
                     className="w-full justify-start"
                     onClick={() => {
-                      setMessages([]);
-                      setCurrentConversationTitle('New Chat');
-                      setShowMenu(false);
+                      if (confirm('Are you sure you want to clear this chat?')) {
+                        setMessages([]);
+                        setCurrentConversationTitle('New Chat');
+                        setShowMenu(false);
+                      }
                     }}
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
@@ -433,69 +595,74 @@ export default function Home() {
 
         {/* Analytics Bar */}
         {showAnalytics && (
-          <div className="p-3 bg-muted border-b border-border flex gap-6 text-sm">
+          <div className="p-2 md:p-3 bg-muted border-b border-border flex flex-wrap gap-3 md:gap-6 text-xs md:text-sm">
             <div className="flex items-center gap-2">
-              <MessageSquare className="h-4 w-4 text-blue-400" />
-              <span>{analytics.totalMessages} messages</span>
+              <MessageSquare className="h-3 w-3 md:h-4 md:w-4 text-blue-400" />
+              <span>{analytics.totalMessages} msgs</span>
             </div>
             <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-yellow-400" />
-              <span>Avg Rating: {analytics.avgRating.toFixed(1)}/5</span>
+              <Star className="h-3 w-3 md:h-4 md:w-4 text-yellow-400" />
+              <span>{analytics.avgRating.toFixed(1)}/5</span>
             </div>
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-green-400" />
-              <span>Avg Time: {analytics.avgResponseTime.toFixed(1)}s</span>
+              <Zap className="h-3 w-3 md:h-4 md:w-4 text-green-400" />
+              <span>{analytics.avgResponseTime.toFixed(1)}s</span>
             </div>
             <div className="flex items-center gap-2">
-              <BarChart className="h-4 w-4 text-purple-400" />
-              <span>Confidence: {(analytics.avgConfidence * 100).toFixed(0)}%</span>
+              <BarChart className="h-3 w-3 md:h-4 md:w-4 text-purple-400" />
+              <span>{(analytics.avgConfidence * 100).toFixed(0)}%</span>
             </div>
           </div>
         )}
 
         {/* Model Selector Section */}
-        <div className="p-4 border-b border-border">
+        <div className="p-3 md:p-4 border-b border-border">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 min-w-0">
               <Button
                 variant="ghost"
                 onClick={() => setShowModelSelector(!showModelSelector)}
-                className="text-sm"
+                className="text-xs md:text-sm min-w-0"
+                size="sm"
               >
-                <span>{selectedModels.length} Active AI Model{selectedModels.length !== 1 ? 's' : ''}</span>
+                <span className="truncate">{selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowPresets(!showPresets)}
+                className="text-xs"
               >
                 Presets
               </Button>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 md:gap-2 shrink-0">
               <Button
                 variant={viewMode === 'chat' ? 'default' : 'ghost'}
                 size="icon"
                 onClick={() => setViewMode('chat')}
                 title="Chat View"
+                className="h-8 w-8"
               >
-                <List className="h-4 w-4" />
+                <List className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
               <Button
                 variant={viewMode === 'comparison' ? 'default' : 'ghost'}
                 size="icon"
                 onClick={() => setViewMode('comparison')}
                 title="Comparison View"
+                className="h-8 w-8 hidden sm:inline-flex"
               >
-                <Grid className="h-4 w-4" />
+                <Grid className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={generateSynthesis}
                 title="Generate Synthesis"
+                className="h-8 w-8"
               >
-                <GitCompare className="h-4 w-4" />
+                <GitCompare className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
             </div>
           </div>
@@ -504,14 +671,14 @@ export default function Home() {
           {showPresets && (
             <div className="mb-3 p-3 bg-muted rounded-lg">
               <h3 className="text-sm font-medium mb-2">Quick Presets</h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {Object.keys(MODEL_PRESETS).map((preset) => (
                   <Button
                     key={preset}
                     variant="outline"
                     size="sm"
                     onClick={() => applyPreset(preset)}
-                    className="justify-start"
+                    className="justify-start text-xs"
                   >
                     {preset}
                   </Button>
@@ -528,10 +695,10 @@ export default function Home() {
                 return (
                   <div
                     key={modelKey}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-muted rounded-full text-sm"
+                    className="flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-muted rounded-full text-xs md:text-sm"
                   >
                     <div className={`w-2 h-2 rounded-full ${getProviderColor(provider)}`} />
-                    <span>{model}</span>
+                    <span className="truncate max-w-[120px]">{model}</span>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -548,13 +715,13 @@ export default function Home() {
 
           {/* Model Selector */}
           {showModelSelector && (
-            <div className="mt-3 p-3 bg-muted rounded-lg max-h-96 overflow-y-auto">
+            <div className="mt-3 p-3 bg-muted rounded-lg max-h-60 md:max-h-96 overflow-y-auto">
               {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
                 <div key={key} className="mb-3 last:mb-0">
                   <div className="flex items-center gap-2 mb-2">
                     <div className={`w-3 h-3 rounded-full ${provider.color}`} />
                     <span className="font-medium text-sm">{provider.name}</span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground hidden sm:inline">
                       {provider.strengths.join(', ')}
                     </span>
                   </div>
@@ -579,14 +746,14 @@ export default function Home() {
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-3 md:p-4">
           {viewMode === 'chat' && (
             <div className="space-y-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                  <div className="text-6xl mb-4">💬</div>
-                  <p className="text-lg">Start a conversation with multiple AIs</p>
-                  <p className="text-sm mt-2">Select models and send a message</p>
+                  <div className="text-4xl md:text-6xl mb-4">💬</div>
+                  <p className="text-base md:text-lg text-center">Start a conversation with multiple AIs</p>
+                  <p className="text-xs md:text-sm mt-2 text-center">Select models and send a message</p>
                 </div>
               ) : (
                 messages.map(msg => (
@@ -595,24 +762,24 @@ export default function Home() {
                     className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg p-3 ${
+                      className={`max-w-[85%] md:max-w-[80%] rounded-lg p-3 ${
                         msg.type === 'user' ? 'bg-primary text-primary-foreground' :
                         msg.type === 'synthesis' ? 'bg-purple-700 text-white' :
                         'bg-muted'
                       }`}
                     >
                       {msg.type === 'ai' && (
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2 text-xs">
-                            <div className={`w-2 h-2 rounded-full ${getProviderColor(msg.provider)}`} />
-                            <span className="font-medium">{msg.model}</span>
+                        <div className="flex items-center justify-between mb-2 gap-2">
+                          <div className="flex items-center gap-2 text-xs min-w-0">
+                            <div className={`w-2 h-2 rounded-full shrink-0 ${getProviderColor(msg.provider)}`} />
+                            <span className="font-medium truncate">{msg.model}</span>
                             {msg.confidence && (
-                              <span className="text-muted-foreground">
-                                {(msg.confidence * 100).toFixed(0)}% confident
+                              <span className="text-muted-foreground hidden sm:inline">
+                                {(msg.confidence * 100).toFixed(0)}%
                               </span>
                             )}
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 shrink-0">
                             <Button
                               variant="ghost"
                               size="icon"
@@ -646,8 +813,19 @@ export default function Home() {
                           <span className="font-medium">Synthesized from {msg.sources} responses</span>
                         </div>
                       )}
+                      {msg.attachments && msg.attachments.length > 0 && (
+                        <div className="mb-2 space-y-1">
+                          {msg.attachments.map((att, idx) => (
+                            <div key={idx} className="flex items-center gap-2 text-xs bg-background/20 rounded p-2">
+                              {att.type.startsWith('image/') ? <ImageIcon className="h-3 w-3" /> : <Paperclip className="h-3 w-3" />}
+                              <span className="truncate flex-1">{att.name}</span>
+                              <span className="text-muted-foreground">{formatFileSize(att.size)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                       {!collapsedResponses.has(msg.id) && (
-                        <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        <p className="text-sm whitespace-pre-wrap break-words">{msg.content}</p>
                       )}
                       {collapsedResponses.has(msg.id) && (
                         <p className="text-sm text-muted-foreground italic">Response collapsed</p>
@@ -671,7 +849,7 @@ export default function Home() {
             </div>
           )}
           {viewMode === 'comparison' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {messages.filter(m => m.type === 'ai').slice(-4).map(msg => (
                 <div key={msg.id} className="bg-muted rounded-lg p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -680,13 +858,13 @@ export default function Home() {
                   </div>
                   <p className="text-sm">{msg.content}</p>
                   <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{msg.confidence ? (msg.confidence * 100).toFixed(0) : 0}% confident</span>
+                    <span>{msg.confidence ? (msg.confidence * 100).toFixed(0) : 0}%</span>
                     <span>{msg.responseTime?.toFixed(1)}s</span>
                   </div>
                 </div>
               ))}
               {messages.filter(m => m.type === 'ai').length === 0 && (
-                <div className="col-span-2 flex items-center justify-center text-muted-foreground py-8">
+                <div className="col-span-1 md:col-span-2 flex items-center justify-center text-muted-foreground py-8">
                   No responses to compare yet
                 </div>
               )}
@@ -695,18 +873,55 @@ export default function Home() {
         </div>
 
         {/* Input Area */}
-        <div className="p-4 border-t border-border">
+        <div className="p-3 md:p-4 border-t border-border">
           {selectedModels.length === 0 && (
             <p className="text-xs text-muted-foreground mb-2 text-center">
               Select at least one AI model to send a message
             </p>
           )}
+          
+          {/* Attachments Preview */}
+          {attachments.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {attachments.map((att, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-muted rounded px-2 py-1 text-xs">
+                  {att.type.startsWith('image/') ? <ImageIcon className="h-3 w-3" /> : <Paperclip className="h-3 w-3" />}
+                  <span className="truncate max-w-[100px]">{att.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-4 w-4 p-0"
+                    onClick={() => removeAttachment(idx)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+          
           <div className="flex gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => fileInputRef.current?.click()}
+              title="Attach files"
+              className="shrink-0"
+            >
+              <Paperclip className="h-4 w-4" />
+            </Button>
             <Input
               type="text"
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               placeholder="Type your message..."
               disabled={selectedModels.length === 0}
               className="flex-1"
@@ -714,6 +929,7 @@ export default function Home() {
             <Button
               onClick={handleSend}
               disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
+              className="shrink-0"
             >
               <Send className="h-4 w-4" />
             </Button>
