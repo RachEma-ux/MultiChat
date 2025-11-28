@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
-  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles
+  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -107,6 +107,7 @@ export default function Home() {
   const [showPresets, setShowPresets] = useState(false);
   const [savedConversations, setSavedConversations] = useState<SavedConversation[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [expandedProviders, setExpandedProviders] = useState<Set<string>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -176,6 +177,24 @@ export default function Home() {
         ? prev.filter(m => m !== modelKey)
         : [...prev, modelKey]
     );
+  };
+
+  const toggleProvider = (provider: string) => {
+    setExpandedProviders(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(provider)) {
+        newSet.delete(provider);
+      } else {
+        newSet.add(provider);
+      }
+      return newSet;
+    });
+  };
+
+  const getProviderSelectionCount = (provider: string) => {
+    const providerModels = AI_PROVIDERS[provider as keyof typeof AI_PROVIDERS].models;
+    const selectedCount = selectedModels.filter(m => m.startsWith(`${provider}:`)).length;
+    return `${selectedCount}/${providerModels.length}`;
   };
 
   const applyPreset = (presetName: string) => {
@@ -743,31 +762,47 @@ export default function Home() {
               </div>
             )}
 
-            {/* Model List */}
-            <div className="p-3 bg-background rounded-lg max-h-60 md:max-h-96 overflow-y-auto">
+            {/* Model List - Collapsible Provider Sections */}
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Available Models</h3>
               {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
-                <div key={key} className="mb-3 last:mb-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-3 h-3 rounded-full ${provider.color}`} />
-                    <span className="font-medium text-sm">{provider.name}</span>
-                    <span className="text-xs text-muted-foreground hidden sm:inline">
-                      {provider.strengths.join(', ')}
+                <div key={key} className="border border-border rounded-lg overflow-hidden">
+                  {/* Provider Header - Clickable */}
+                  <button
+                    onClick={() => toggleProvider(key)}
+                    className="w-full flex items-center justify-between p-3 md:p-4 bg-muted/30 hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <ChevronRight 
+                        className={`h-4 w-4 transition-transform ${
+                          expandedProviders.has(key) ? 'rotate-90' : ''
+                        }`}
+                      />
+                      <div className={`w-3 h-3 rounded-full ${provider.color}`} />
+                      <span className="font-medium text-sm md:text-base">{provider.name}</span>
+                    </div>
+                    <span className="text-sm text-muted-foreground">
+                      {getProviderSelectionCount(key)}
                     </span>
-                  </div>
-                  <div className="pl-5 space-y-1">
-                    {provider.models.map(model => (
-                      <label
-                        key={model}
-                        className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
-                      >
-                        <Checkbox
-                          checked={selectedModels.includes(`${key}:${model}`)}
-                          onCheckedChange={() => toggleModel(key, model)}
-                        />
-                        <span className="text-sm">{model}</span>
-                      </label>
-                    ))}
-                  </div>
+                  </button>
+                  
+                  {/* Provider Models - Collapsible */}
+                  {expandedProviders.has(key) && (
+                    <div className="p-2 md:p-3 bg-background space-y-1">
+                      {provider.models.map(model => (
+                        <label
+                          key={model}
+                          className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
+                        >
+                          <Checkbox
+                            checked={selectedModels.includes(`${key}:${model}`)}
+                            onCheckedChange={() => toggleModel(key, model)}
+                          />
+                          <span className="text-sm">{model}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -940,24 +975,30 @@ export default function Home() {
               onClick={() => setShowModelSelector(!showModelSelector)}
               className="text-[10px] h-7 px-2 shrink-0"
             >
-              {selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}
+              Models
             </Button>
             
-            {/* Synthesizer Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={generateSynthesis}
-              title="Generate Synthesis"
-              className="h-7 w-7 shrink-0"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-            </Button>
+            {/* Synthesizer Button - Only show when models are selected */}
+            {selectedModels.length > 0 && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={generateSynthesis}
+                title="Generate Synthesis"
+                className="h-7 w-7 shrink-0"
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+              </Button>
+            )}
             
-            {/* Warning Text */}
-            {selectedModels.length === 0 && (
+            {/* Dynamic Text */}
+            {selectedModels.length === 0 ? (
               <p className="text-[10px] text-muted-foreground text-center px-1">
                 Select at least one AI model to send a message
+              </p>
+            ) : (
+              <p className="text-[10px] text-muted-foreground text-center px-1">
+                {selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}
               </p>
             )}
             
@@ -965,7 +1006,12 @@ export default function Home() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowPresets(!showPresets)}
+              onClick={() => {
+                setShowPresets(!showPresets);
+                if (!showModelSelector) {
+                  setShowModelSelector(true);
+                }
+              }}
               className="text-[10px] h-7 px-2 shrink-0"
             >
               Presets
