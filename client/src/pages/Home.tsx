@@ -994,7 +994,7 @@ export default function Home() {
               onChange={handleFileUpload}
             />
             
-            {/* Quick Menu (+) */}
+            {/* Quick Menu (Hamburger) */}
             <div className="relative">
               <Button
                 variant="outline"
@@ -1003,7 +1003,7 @@ export default function Home() {
                 className="h-7 w-7 shrink-0"
                 title="Quick Actions"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Menu className="h-3.5 w-3.5" />
               </Button>
               
               {showQuickMenu && (
@@ -1125,6 +1125,20 @@ export default function Home() {
                 </>
               )}
             </div>
+            
+            {/* New Chat Button (+) */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                setCurrentConversationTitle('New Chat');
+                setMessages([]);
+              }}
+              className="h-7 w-7 shrink-0"
+              title="New Chat"
+            >
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
             
             {/* Models Button */}
             <Button
