@@ -1229,6 +1229,19 @@ export default function Home() {
               )}
             </div>
             
+            {/* Save Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => {
+                saveConversation();
+              }}
+              className="h-7 w-7 shrink-0"
+              title="Save Chat"
+            >
+              <Save className="h-3.5 w-3.5" />
+            </Button>
+            
             {/* Presets Button */}
             <Button
               variant="outline"
