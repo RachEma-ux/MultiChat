@@ -805,7 +805,8 @@ export default function Home() {
               </div>
             )}
 
-            {/* Model List - Collapsible Provider Sections */}
+            {/* Model List - Collapsible Provider Sections - Hide when showing Presets */}
+            {!showPresets && (
             <div className="space-y-2">
               <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Available Providers</h3>
               {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
@@ -849,6 +850,7 @@ export default function Home() {
                 </div>
               ))}
             </div>
+            )}
           </div>
         )}
 
