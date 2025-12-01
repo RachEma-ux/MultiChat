@@ -157,6 +157,7 @@ export default function Home() {
   const [currentMode, setCurrentMode] = useState<'Agents' | 'Chat' | 'Conversation' | 'Empty'>('Chat');
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -1015,19 +1016,138 @@ export default function Home() {
             
 
             
-            {/* New Chat Button (+) */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setCurrentConversationTitle('New Chat');
-                setMessages([]);
-              }}
-              className="h-7 w-7 shrink-0"
-              title="New Chat"
-            >
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
+            {/* Plus Menu Button */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowPlusMenu(!showPlusMenu)}
+                className="h-7 w-7 shrink-0"
+                title="Menu"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </Button>
+              
+              {showPlusMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowPlusMenu(false)}
+                  />
+                  <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                    {/* Action Buttons */}
+                    <button
+                      onClick={() => {
+                        setCurrentConversationTitle('New Chat');
+                        setMessages([]);
+                        setShowPlusMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      <span className="text-sm">New Chat</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingTitle(true);
+                        setEditTitleValue(currentConversationTitle);
+                        setShowPlusMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span className="text-sm">Rename Chat</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        saveConversation();
+                        setShowPlusMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span className="text-sm">Save Chat</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Are you sure you want to clear this chat?')) {
+                          setMessages([]);
+                          setCurrentConversationTitle('New Chat');
+                          setShowPlusMenu(false);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="text-sm">Clear Chat</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAnalytics(!showAnalytics);
+                        setShowPlusMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                    >
+                      <BarChart className="h-4 w-4" />
+                      <span className="text-sm">Show Analytics</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (confirm('Are you sure you want to delete this chat?')) {
+                          setMessages([]);
+                          setCurrentConversationTitle('New Chat');
+                          setShowPlusMenu(false);
+                        }
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left text-red-500"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      <span className="text-sm">Delete Chat</span>
+                    </button>
+                    
+                    {/* Recent Conversations */}
+                    {savedConversations.length > 0 && (
+                      <div className="border-t border-border">
+                        <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">RECENT CONVERSATIONS</div>
+                        {savedConversations.slice(0, 3).map((convo) => (
+                          <button
+                            key={convo.id}
+                            onClick={() => {
+                              loadConversation(convo);
+                              setShowPlusMenu(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            <span className="text-sm truncate">{convo.title}</span>
+                          </button>
+                        ))}
+                        <button
+                          onClick={() => {
+                            setShowMenu(true);
+                            setShowPlusMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          <span className="text-sm">View All Saved</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            toast.info(`Archive (${archivedConversations.length})`);
+                            setShowPlusMenu(false);
+                          }}
+                          className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                        >
+                          <Archive className="h-4 w-4" />
+                          <span className="text-sm">Archive ({archivedConversations.length})</span>
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
             
             {/* Models Button */}
             <Button
