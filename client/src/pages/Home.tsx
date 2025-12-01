@@ -8,10 +8,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// Providers are companies that create model families
 const AI_PROVIDERS = {
   anthropic: {
     name: 'Anthropic',
-    models: ['Claude Sonnet 4.5', 'Claude Opus 4', 'Claude Haiku 4.5'],
+    models: ['Claude 3 Haiku', 'Claude 3 Sonnet', 'Claude 3 Opus'],
     color: 'bg-orange-500',
     strengths: ['reasoning', 'ethics', 'long-form']
   },
@@ -23,42 +24,84 @@ const AI_PROVIDERS = {
   },
   google: {
     name: 'Google',
-    models: ['Gemini Pro', 'Gemini Ultra'],
+    models: ['Gemini Nano', 'Gemini Pro', 'Gemini Ultra', 'Gemma', 'PaLM 2'],
     color: 'bg-blue-500',
     strengths: ['multimodal', 'search', 'analysis']
   },
-  deepseek: {
-    name: 'DeepSeek',
-    models: ['DeepSeek V3', 'DeepSeek Coder', 'DeepSeek Chat'],
-    color: 'bg-purple-500',
-    strengths: ['technical', 'coding', 'math']
+  meta: {
+    name: 'Meta',
+    models: ['Llama 2', 'Llama 3', 'Code Llama', 'Llama Guard'],
+    color: 'bg-blue-600',
+    strengths: ['open-source', 'coding', 'general']
   },
-  manus: {
-    name: 'Manus',
-    models: ['Manus Pro', 'Manus Standard'],
+  mistral: {
+    name: 'Mistral AI',
+    models: ['Mistral 7B', 'Mixtral 8x7B', 'Mixtral 8x22B', 'Codestral'],
+    color: 'bg-orange-600',
+    strengths: ['efficient', 'coding', 'multilingual']
+  },
+  microsoft: {
+    name: 'Microsoft',
+    models: ['Phi-2', 'Phi-3 Mini', 'Phi-3 Small', 'Phi-3 Medium'],
+    color: 'bg-blue-400',
+    strengths: ['efficient', 'reasoning', 'coding']
+  },
+  qwen: {
+    name: 'Alibaba / Qwen',
+    models: ['Qwen 1.8B', 'Qwen 7B', 'Qwen 14B', 'Qwen 72B', 'Qwen1.5', 'Qwen2', 'Code Qwen'],
+    color: 'bg-red-500',
+    strengths: ['multilingual', 'coding', 'general']
+  },
+  xai: {
+    name: 'xAI',
+    models: ['Grok', 'Grok-1.5'],
+    color: 'bg-yellow-500',
+    strengths: ['reasoning', 'general', 'real-time']
+  },
+  cohere: {
+    name: 'Cohere',
+    models: ['Command', 'Command-R', 'Command-R+', 'Embed', 'Rerank'],
+    color: 'bg-teal-500',
+    strengths: ['enterprise', 'embeddings', 'reranking']
+  },
+  butterfly: {
+    name: 'Butterfly Effect Technology',
+    models: ['Manus'],
     color: 'bg-pink-500',
     strengths: ['general', 'creative']
   },
-  kimi: {
-    name: 'Kimi',
-    models: ['Kimi Chat', 'Kimi Plus'],
+  moonshot: {
+    name: 'Moonshot AI',
+    models: ['Kimi'],
     color: 'bg-cyan-500',
     strengths: ['conversation', 'general']
+  },
+  palantir: {
+    name: 'Palantir',
+    models: ['API', 'Gotham', 'Foundry', 'Apollo'],
+    color: 'bg-slate-700',
+    strengths: ['data-integration', 'analytics', 'enterprise']
   },
   perplexity: {
     name: 'Perplexity',
     models: ['Perplexity Pro', 'Perplexity Standard'],
     color: 'bg-indigo-500',
     strengths: ['research', 'citations', 'facts']
+  },
+  deepseek: {
+    name: 'DeepSeek',
+    models: ['DeepSeek V3', 'DeepSeek Coder', 'DeepSeek Chat'],
+    color: 'bg-purple-500',
+    strengths: ['technical', 'coding', 'math']
   }
 };
 
 const MODEL_PRESETS = {
-  'Coding Team': ['openai:GPT-4', 'deepseek:DeepSeek Coder', 'anthropic:Claude Sonnet 4.5'],
-  'Creative Writers': ['openai:GPT-4 Turbo', 'anthropic:Claude Opus 4', 'manus:Manus Pro'],
-  'Research Squad': ['perplexity:Perplexity Pro', 'google:Gemini Pro', 'anthropic:Claude Sonnet 4.5'],
-  'General Purpose': ['anthropic:Claude Sonnet 4.5', 'openai:GPT-4', 'google:Gemini Pro'],
-  'Fast Responders': ['anthropic:Claude Haiku 4.5', 'openai:GPT-3.5 Turbo', 'kimi:Kimi Chat']
+  'Coding Team': ['openai:GPT-4', 'deepseek:DeepSeek Coder', 'mistral:Codestral'],
+  'Creative Writers': ['openai:GPT-4 Turbo', 'anthropic:Claude 3 Opus', 'butterfly:Manus'],
+  'Research Squad': ['perplexity:Perplexity Pro', 'google:Gemini Pro', 'anthropic:Claude 3 Sonnet'],
+  'General Purpose': ['anthropic:Claude 3 Sonnet', 'openai:GPT-4', 'google:Gemini Pro'],
+  'Fast Responders': ['anthropic:Claude 3 Haiku', 'openai:GPT-3.5 Turbo', 'moonshot:Kimi']
 };
 
 interface Attachment {
@@ -111,6 +154,9 @@ export default function Home() {
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [archivedConversations, setArchivedConversations] = useState<SavedConversation[]>([]);
+  const [currentMode, setCurrentMode] = useState<'Agents' | 'Chat' | 'Conversation' | 'Empty'>('Chat');
+  const [showModeMenu, setShowModeMenu] = useState(false);
+  const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -595,100 +641,92 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Menu Dropdown */}
+        {/* Header Hamburger Menu with Menu Groups */}
         {showMenu && (
           <>
             <div 
               className="fixed inset-0 z-40"
               onClick={() => setShowMenu(false)}
             />
-            <div className="absolute top-14 md:top-16 left-2 md:left-4 w-80 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl z-50 border border-border max-h-[80vh] overflow-y-auto">
-              <div className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold">Menu</h2>
-                  <Button 
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowMenu(false)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                </div>
-                
-                {/* Saved Conversations */}
-                {savedConversations.length > 0 && (
-                  <div className="mb-4">
-                    <h3 className="text-sm font-medium text-muted-foreground mb-2">Saved Conversations</h3>
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {savedConversations.map((convo) => (
-                        <div key={convo.id} className="flex items-center gap-2">
-                          <Button
-                            variant="ghost"
-                            className="flex-1 justify-start text-left h-auto py-2"
-                            onClick={() => loadConversation(convo)}
-                          >
-                            <div className="min-w-0">
-                              <div className="font-medium truncate">{convo.title}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {new Date(convo.timestamp).toLocaleDateString()} • {convo.messages?.length || 0} msgs
-                              </div>
-                            </div>
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteConversation(convo.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                <div className="space-y-2 border-t border-border pt-4">
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      setCurrentConversationTitle('New Chat');
-                      setMessages([]);
-                      setShowMenu(false);
-                    }}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Chat
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start md:hidden"
-                    onClick={() => {
-                      setShowAnalytics(!showAnalytics);
-                      setShowMenu(false);
-                    }}
-                  >
-                    <BarChart className="h-4 w-4 mr-2" />
-                    Toggle Analytics
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="w-full justify-start"
-                    onClick={() => {
-                      if (confirm('Are you sure you want to clear this chat?')) {
-                        setMessages([]);
-                        setCurrentConversationTitle('New Chat');
-                        setShowMenu(false);
-                      }
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Clear Chat
-                  </Button>
-                </div>
+            <div className="absolute top-14 md:top-16 left-2 md:left-4 w-72 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl z-50 border border-border max-h-[80vh] overflow-y-auto">
+              {/* User Account */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">USER ACCOUNT</div>
+                {['Item1', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Agents */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">AGENTS</div>
+                {['Item1', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Skills */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SKILLS</div>
+                {['Item1', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Hosting */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">HOSTING</div>
+                {['Item1', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* IDE */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">IDE</div>
+                {['AnythingLLM', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Runners */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">RUNNERS</div>
+                {['Ollama', 'vLLM', 'LM Studio'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Hubs */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">HUBS</div>
+                {['Hugging Face', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Settings */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SETTINGS</div>
+                {['API Server', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Database */}
+              <div className="border-b border-border">
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">DATABASE</div>
+                {['Item1', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
+              </div>
+              
+              {/* Search */}
+              <div>
+                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SEARCH</div>
+                {['SearchXNG', 'Item2', 'Item3'].map(item => (
+                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
+                ))}
               </div>
             </div>
           </>
@@ -742,18 +780,18 @@ export default function Home() {
         {/* Model Selector Panel */}
         {showModelSelector && (
           <div className="p-3 md:p-4 border-b border-border bg-muted/50">
-            {/* Presets */}
+            {/* Presets - Only show Quick Presets */}
             {showPresets && (
               <div className="mb-3 p-3 bg-background rounded-lg">
-                <h3 className="text-sm font-medium mb-2">Quick Presets</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <h3 className="text-sm font-medium mb-3">Quick Presets</h3>
+                <div className="space-y-2">
                   {Object.keys(MODEL_PRESETS).map((preset) => (
                     <Button
                       key={preset}
                       variant="outline"
                       size="sm"
                       onClick={() => applyPreset(preset)}
-                      className="justify-start text-xs"
+                      className="w-full justify-start text-xs"
                     >
                       {preset}
                     </Button>
@@ -790,7 +828,7 @@ export default function Home() {
 
             {/* Model List - Collapsible Provider Sections */}
             <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Available Models</h3>
+              <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Available Providers</h3>
               {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
                 <div key={key} className="border border-border rounded-lg overflow-hidden">
                   {/* Provider Header - Clickable */}
@@ -994,137 +1032,7 @@ export default function Home() {
               onChange={handleFileUpload}
             />
             
-            {/* Quick Menu (Hamburger) */}
-            <div className="relative">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setShowQuickMenu(!showQuickMenu)}
-                className="h-7 w-7 shrink-0"
-                title="Quick Actions"
-              >
-                <Menu className="h-3.5 w-3.5" />
-              </Button>
-              
-              {showQuickMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowQuickMenu(false)}
-                  />
-                  <div className="absolute bottom-full left-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setCurrentConversationTitle('New Chat');
-                        setMessages([]);
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="text-sm">New Chat</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleTitleClick();
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span className="text-sm">Rename Chat</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        saveConversation();
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span className="text-sm">Save Chat</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to clear this chat?')) {
-                          setMessages([]);
-                          setCurrentConversationTitle('New Chat');
-                        }
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      <span className="text-sm">Clear Chat</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAnalytics(!showAnalytics);
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <BarChart className="h-4 w-4" />
-                      <span className="text-sm">Show Analytics</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to delete this chat?')) {
-                          setMessages([]);
-                          setCurrentConversationTitle('New Chat');
-                        }
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                      <span className="text-sm text-red-500">Delete Chat</span>
-                    </button>
-                    <div className="px-4 py-2 border-b border-border">
-                      <span className="text-xs font-semibold text-muted-foreground">RECENT CONVERSATIONS</span>
-                    </div>
-                    {getRecentConversations().length > 0 ? (
-                      getRecentConversations().map(convo => (
-                        <button
-                          key={convo.id}
-                          onClick={() => {
-                            loadConversation(convo);
-                            setShowQuickMenu(false);
-                          }}
-                          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-accent transition-colors text-left text-sm truncate"
-                          title={convo.title}
-                        >
-                          <MessageSquare className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{convo.title}</span>
-                        </button>
-                      ))
-                    ) : (
-                      <div className="px-4 py-2 text-xs text-muted-foreground">No saved conversations</div>
-                    )}
-                    <button
-                      onClick={() => {
-                        setShowMenu(true);
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left border-t border-border"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      <span className="text-sm">View All Saved</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        toast.info(`${archivedConversations.length} conversations in archive`);
-                        setShowQuickMenu(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
-                    >
-                      <Archive className="h-4 w-4" />
-                      <span className="text-sm">Archive ({archivedConversations.length})</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+
             
             {/* New Chat Button (+) */}
             <Button
@@ -1229,18 +1137,43 @@ export default function Home() {
               )}
             </div>
             
-            {/* Save Button */}
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                saveConversation();
-              }}
-              className="h-7 w-7 shrink-0"
-              title="Save Chat"
-            >
-              <Save className="h-3.5 w-3.5" />
-            </Button>
+            {/* Mode Button */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowModeMenu(!showModeMenu)}
+                className="text-[10px] h-7 px-2 shrink-0"
+              >
+                Mode
+              </Button>
+              
+              {showModeMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowModeMenu(false)}
+                  />
+                  <div className="absolute bottom-full right-auto left-0 mb-2 w-40 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                    {['Agents', 'Chat', 'Conversation', 'Empty'].map(mode => (
+                      <button
+                        key={mode}
+                        onClick={() => {
+                          setCurrentMode(mode as 'Agents' | 'Chat' | 'Conversation' | 'Empty');
+                          setShowModeMenu(false);
+                        }}
+                        className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
+                          currentMode === mode ? 'bg-accent' : 'hover:bg-accent'
+                        }`}
+                      >
+                        <span>{mode}</span>
+                        {currentMode === mode && <span className="ml-auto text-xs">✓</span>}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             
             {/* Presets Button */}
             <Button
