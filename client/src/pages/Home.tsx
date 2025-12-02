@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
   MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight, Settings, Archive, Edit
@@ -158,6 +159,8 @@ export default function Home() {
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
+  const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
+  const [showFooterMenu, setShowFooterMenu] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -227,6 +230,16 @@ export default function Home() {
         ? prev.filter(m => m !== modelKey)
         : [...prev, modelKey]
     );
+  };
+
+  const toggleMenuGroup = (group: string) => {
+    const newExpanded = new Set(expandedMenuGroups);
+    if (newExpanded.has(group)) {
+      newExpanded.delete(group);
+    } else {
+      newExpanded.add(group);
+    }
+    setExpandedMenuGroups(newExpanded);
   };
 
   const toggleProvider = (provider: string) => {
@@ -620,15 +633,43 @@ export default function Home() {
             >
               <BarChart className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={saveConversation}
-              disabled={messages.length === 0}
-              title="Save Conversation"
-            >
-              <Save className="h-5 w-5" />
-            </Button>
+            {/* Mode Button with Dropdown */}
+            <div className="relative">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowModeMenu(!showModeMenu)}
+                title="Mode"
+                className="text-xs"
+              >
+                Mode
+              </Button>
+              {showModeMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowModeMenu(false)}
+                  />
+                  <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                    {['Agents', 'Chat', 'Conversation', 'Empty'].map((mode) => (
+                      <button
+                        key={mode}
+                        onClick={() => {
+                          setCurrentMode(mode as any);
+                          setShowModeMenu(false);
+                          toast.info(`Switched to ${mode} mode`);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
+                          currentMode === mode ? 'bg-accent' : ''
+                        }`}
+                      >
+                        {mode}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <Button
               variant="ghost"
               size="icon"
@@ -650,85 +691,67 @@ export default function Home() {
               onClick={() => setShowMenu(false)}
             />
             <div className="absolute top-14 md:top-16 left-2 md:left-4 w-72 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl z-50 border border-border max-h-[80vh] overflow-y-auto">
-              {/* User Account */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">USER ACCOUNT</div>
-                {['Item1', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Agents */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">AGENTS</div>
-                {['Item1', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Skills */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SKILLS</div>
-                {['Item1', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Hosting */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">HOSTING</div>
-                {['Item1', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* IDE */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">IDE</div>
-                {['AnythingLLM', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Runners */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">RUNNERS</div>
-                {['Ollama', 'vLLM', 'LM Studio'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Hubs */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">HUBS</div>
-                {['Hugging Face', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Settings */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SETTINGS</div>
-                {['API Server', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Database */}
-              <div className="border-b border-border">
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">DATABASE</div>
-                {['Item1', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
-              
-              {/* Search */}
-              <div>
-                <div className="px-4 py-2 text-xs font-semibold text-muted-foreground">SEARCH</div>
-                {['SearchXNG', 'Item2', 'Item3'].map(item => (
-                  <button key={item} className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors">{item}</button>
-                ))}
-              </div>
+              <CollapsibleMenuGroup 
+                title="USER ACCOUNT" 
+                items={['Item1', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('user')}
+                onToggle={() => toggleMenuGroup('user')}
+              />
+              <CollapsibleMenuGroup 
+                title="AGENTS" 
+                items={['Item1', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('agents')}
+                onToggle={() => toggleMenuGroup('agents')}
+              />
+              <CollapsibleMenuGroup 
+                title="SKILLS" 
+                items={['Item1', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('skills')}
+                onToggle={() => toggleMenuGroup('skills')}
+              />
+              <CollapsibleMenuGroup 
+                title="HOSTING" 
+                items={['Item1', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('hosting')}
+                onToggle={() => toggleMenuGroup('hosting')}
+              />
+              <CollapsibleMenuGroup 
+                title="IDE" 
+                items={['AnythingLLM', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('ide')}
+                onToggle={() => toggleMenuGroup('ide')}
+              />
+              <CollapsibleMenuGroup 
+                title="RUNNERS" 
+                items={['Ollama', 'vLLM', 'LM Studio']} 
+                isExpanded={expandedMenuGroups.has('runners')}
+                onToggle={() => toggleMenuGroup('runners')}
+              />
+              <CollapsibleMenuGroup 
+                title="HUBS" 
+                items={['Hugging Face', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('hubs')}
+                onToggle={() => toggleMenuGroup('hubs')}
+              />
+              <CollapsibleMenuGroup 
+                title="SETTINGS" 
+                items={['API Server', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('settings')}
+                onToggle={() => toggleMenuGroup('settings')}
+              />
+              <CollapsibleMenuGroup 
+                title="DATABASE" 
+                items={['Item1', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('database')}
+                onToggle={() => toggleMenuGroup('database')}
+              />
+              <CollapsibleMenuGroup 
+                title="SEARCH" 
+                items={['SearchXNG', 'Item2', 'Item3']} 
+                isExpanded={expandedMenuGroups.has('search')}
+                onToggle={() => toggleMenuGroup('search')}
+                isLast
+              />
             </div>
           </>
         )}
@@ -1016,6 +1039,57 @@ export default function Home() {
             
 
             
+            {/* Footer Hamburger Menu */}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setShowFooterMenu(!showFooterMenu)}
+                className="h-7 w-7 shrink-0"
+                title="Menu"
+              >
+                <Menu className="h-3.5 w-3.5" />
+              </Button>
+              
+              {showFooterMenu && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowFooterMenu(false)}
+                  />
+                  <div className="absolute bottom-full left-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                    <button
+                      onClick={() => {
+                        toast.info('Footer menu option 1');
+                        setShowFooterMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Option 1
+                    </button>
+                    <button
+                      onClick={() => {
+                        toast.info('Footer menu option 2');
+                        setShowFooterMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Option 2
+                    </button>
+                    <button
+                      onClick={() => {
+                        toast.info('Footer menu option 3');
+                        setShowFooterMenu(false);
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Option 3
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            
             {/* Plus Menu Button */}
             <div className="relative">
               <Button
@@ -1238,57 +1312,39 @@ export default function Home() {
               )}
             </div>
             
-            {/* Mode Button */}
+            {/* Save Icon */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={saveConversation}
+              disabled={messages.length === 0}
+              title="Save Conversation"
+              className="h-7 w-7 shrink-0"
+            >
+              <Save className="h-3.5 w-3.5" />
+            </Button>
+            
+            {/* Presets Button */}
             <div className="relative">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowModeMenu(!showModeMenu)}
+                onClick={() => setShowPresets(!showPresets)}
                 className="text-[10px] h-7 px-2 shrink-0"
               >
-                Mode
+                Presets
               </Button>
-              
-              {showModeMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowModeMenu(false)}
-                  />
-                  <div className="absolute bottom-full right-auto left-0 mb-2 w-40 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                    {['Agents', 'Chat', 'Conversation', 'Empty'].map(mode => (
-                      <button
-                        key={mode}
-                        onClick={() => {
-                          setCurrentMode(mode as 'Agents' | 'Chat' | 'Conversation' | 'Empty');
-                          setShowModeMenu(false);
-                        }}
-                        className={`w-full flex items-center gap-3 px-4 py-2 text-left text-sm transition-colors ${
-                          currentMode === mode ? 'bg-accent' : 'hover:bg-accent'
-                        }`}
-                      >
-                        <span>{mode}</span>
-                        {currentMode === mode && <span className="ml-auto text-xs">✓</span>}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
             </div>
             
-            {/* Presets Button */}
+            {/* Settings Icon */}
             <Button
               variant="outline"
-              size="sm"
-              onClick={() => {
-                setShowPresets(!showPresets);
-                if (!showModelSelector) {
-                  setShowModelSelector(true);
-                }
-              }}
-              className="text-[10px] h-7 px-2 shrink-0"
+              size="icon"
+              onClick={() => setShowSettings(!showSettings)}
+              className="h-7 w-7 shrink-0"
+              title="Settings"
             >
-              Presets
+              <Settings className="h-3.5 w-3.5" />
             </Button>
           </div>
           
