@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
-  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight, Settings, Archive, Edit
+  MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight, Settings, Archive, Edit, Mic, Maximize2, Radio
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -161,6 +161,9 @@ export default function Home() {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [showFooterMenu, setShowFooterMenu] = useState(false);
+  const [showFullScreenEditor, setShowFullScreenEditor] = useState(false);
+  const [textareaRows, setTextareaRows] = useState(1);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +271,25 @@ export default function Home() {
       }
     });
   }, [savedConversations]);
+
+  // Auto-grow textarea
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const lineHeight = 24; // approximate line height
+      const maxLines = 5;
+      const maxHeight = lineHeight * maxLines;
+      
+      if (scrollHeight > maxHeight) {
+        textareaRef.current.style.height = `${maxHeight}px`;
+        textareaRef.current.style.overflowY = 'auto';
+      } else {
+        textareaRef.current.style.height = `${scrollHeight}px`;
+        textareaRef.current.style.overflowY = 'hidden';
+      }
+    }
+  }, [inputMessage]);
 
   const applyPreset = (presetName: string) => {
     setSelectedModels(MODEL_PRESETS[presetName as keyof typeof MODEL_PRESETS]);
@@ -1312,35 +1334,132 @@ export default function Home() {
           </div>
           
           {/* Input Row */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-end">
             <Button
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               title="Attach files"
-              className="shrink-0"
+              className="shrink-0 h-10 w-10"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            <Input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Type your message..."
-              disabled={selectedModels.length === 0}
-              className="flex-1"
-            />
+            
+            {/* Microphone Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => toast.info('Voice input started')}
+              title="Voice input"
+              className="shrink-0 h-10 w-10"
+            >
+              <Mic className="h-4 w-4" />
+            </Button>
+            
+            {/* Textarea with expand icon */}
+            <div className="flex-1 relative">
+              <textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder={selectedModels.length === 0 ? "Select at least one AI model to send a message" : "Type your message..."}
+                disabled={selectedModels.length === 0}
+                className="w-full px-3 py-2 pr-10 rounded-md border border-input bg-background text-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                rows={1}
+                style={{ minHeight: '40px' }}
+              />
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowFullScreenEditor(true)}
+                title="Expand editor"
+                className="absolute top-1 right-1 h-8 w-8"
+              >
+                <Maximize2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            
+            {/* Waveform Button */}
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => toast.info('Voice mode started')}
+              title="Voice mode"
+              className="shrink-0 h-10 w-10"
+            >
+              <Radio className="h-4 w-4" />
+            </Button>
+            
             <Button
               onClick={handleSend}
               disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
-              className="shrink-0"
+              className="shrink-0 h-10 w-10"
+              size="icon"
             >
               <Send className="h-4 w-4" />
             </Button>
           </div>
         </div>
       </div>
+      
+      {/* Full-Screen Editor */}
+      {showFullScreenEditor && (
+        <div className="fixed inset-0 z-50 bg-background flex flex-col">
+          {/* Top Bar */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowFullScreenEditor(false)}
+              title="Close"
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <h2 className="text-lg font-semibold">Compose Message</h2>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setShowFullScreenEditor(false)}
+            >
+              Done
+            </Button>
+          </div>
+          
+          {/* Large Textarea */}
+          <div className="flex-1 p-4">
+            <textarea
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              placeholder={selectedModels.length === 0 ? "Select at least one AI model to send a message" : "Type your message..."}
+              className="w-full h-full px-4 py-3 rounded-md border border-input bg-background text-base resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              autoFocus
+            />
+          </div>
+          
+          {/* Bottom Actions */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <div className="text-sm text-muted-foreground">
+              {inputMessage.length} characters
+            </div>
+            <Button
+              onClick={() => {
+                handleSend();
+                setShowFullScreenEditor(false);
+              }}
+              disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
+            >
+              <Send className="h-4 w-4 mr-2" />
+              Send Message
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
