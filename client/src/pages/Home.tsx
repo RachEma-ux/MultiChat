@@ -1344,18 +1344,7 @@ export default function Home() {
                 ref={textareaRef}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    if (e.shiftKey) {
-                      // Allow default behavior for Shift+Enter (new line)
-                      return;
-                    } else {
-                      // Prevent default and send message for Enter alone
-                      e.preventDefault();
-                      handleSend();
-                    }
-                  }
-                }}
+
                 placeholder="Type your message..."
                 disabled={selectedModels.length === 0}
                 rows={1}
