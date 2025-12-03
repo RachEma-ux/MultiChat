@@ -161,6 +161,7 @@ export default function Home() {
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [showFooterMenu, setShowFooterMenu] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -268,6 +269,16 @@ export default function Home() {
       }
     });
   }, [savedConversations]);
+
+  // Auto-resize textarea
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 200); // max 200px
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, [inputMessage]);
 
   const applyPreset = (presetName: string) => {
     setSelectedModels(MODEL_PRESETS[presetName as keyof typeof MODEL_PRESETS]);
@@ -1312,29 +1323,39 @@ export default function Home() {
           </div>
           
           {/* Input Row */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-end">
             <Button
               variant="outline"
               size="icon"
               onClick={() => fileInputRef.current?.click()}
               title="Attach files"
-              className="shrink-0"
+              className="shrink-0 h-10 w-10"
             >
               <Paperclip className="h-4 w-4" />
             </Button>
-            <Input
-              type="text"
-              value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
-              placeholder="Type your message..."
-              disabled={selectedModels.length === 0}
-              className="flex-1"
-            />
+            <div className="flex-1 relative">
+              <textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSend();
+                  }
+                }}
+                placeholder="Type your message..."
+                disabled={selectedModels.length === 0}
+                rows={1}
+                className="w-full min-h-[40px] max-h-[200px] px-3 py-2.5 rounded-md border border-input bg-background text-sm resize-none overflow-y-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ lineHeight: '1.5' }}
+              />
+            </div>
             <Button
               onClick={handleSend}
               disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
-              className="shrink-0"
+              size="icon"
+              className="shrink-0 h-10 w-10"
             >
               <Send className="h-4 w-4" />
             </Button>
