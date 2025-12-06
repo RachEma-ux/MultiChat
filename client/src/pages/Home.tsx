@@ -2,7 +2,15 @@ import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
+import { PresetsManagement } from '@/components/PresetsManagement';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
   MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight, Settings, Archive, Edit
@@ -98,11 +106,26 @@ const AI_PROVIDERS = {
 };
 
 const MODEL_PRESETS = {
-  'Coding Team': ['openai:GPT-4', 'deepseek:DeepSeek Coder', 'mistral:Codestral'],
-  'Creative Writers': ['openai:GPT-4 Turbo', 'anthropic:Claude 3 Opus', 'butterfly:Manus'],
-  'Research Squad': ['perplexity:Perplexity Pro', 'google:Gemini Pro', 'anthropic:Claude 3 Sonnet'],
-  'General Purpose': ['anthropic:Claude 3 Sonnet', 'openai:GPT-4', 'google:Gemini Pro'],
-  'Fast Responders': ['anthropic:Claude 3 Haiku', 'openai:GPT-3.5 Turbo', 'moonshot:Kimi']
+  'coding': {
+    name: 'Coding Team',
+    models: ['openai:GPT-4', 'deepseek:DeepSeek Coder', 'mistral:Codestral']
+  },
+  'creative': {
+    name: 'Creative Writers',
+    models: ['openai:GPT-4 Turbo', 'anthropic:Claude 3 Opus', 'butterfly:Manus']
+  },
+  'research': {
+    name: 'Research Squad',
+    models: ['perplexity:Perplexity Pro', 'google:Gemini Pro', 'anthropic:Claude 3 Sonnet']
+  },
+  'general': {
+    name: 'General Purpose',
+    models: ['anthropic:Claude 3 Sonnet', 'openai:GPT-4', 'google:Gemini Pro']
+  },
+  'fast': {
+    name: 'Fast Responders',
+    models: ['anthropic:Claude 3 Haiku', 'openai:GPT-3.5 Turbo', 'moonshot:Kimi']
+  }
 };
 
 interface Attachment {
@@ -117,7 +140,7 @@ interface CustomPreset {
   name: string;
   description: string;
   models: string[];
-  type: 'built-in' | 'custom';
+  type: 'custom';
   color?: string;
   icon?: string;
 }
@@ -177,6 +200,10 @@ export default function Home() {
   const [presetEditorName, setPresetEditorName] = useState('');
   const [presetEditorDescription, setPresetEditorDescription] = useState('');
   const [presetEditorModels, setPresetEditorModels] = useState<string[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<string>('');
+  const [selectedModel, setSelectedModel] = useState<string>('');
+  const [showPresetsManagement, setShowPresetsManagement] = useState(false);
+  const [defaultModels, setDefaultModels] = useState<string[]>([]);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -290,12 +317,12 @@ export default function Home() {
 
   const getAllPresets = (): CustomPreset[] => {
     // Convert built-in presets to CustomPreset format
-    const builtInPresets: CustomPreset[] = Object.entries(MODEL_PRESETS).map(([name, models]) => ({
-      id: `built-in-${name}`,
-      name,
+    const builtInPresets: CustomPreset[] = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
+      id: `built-in-${key}`,
+      name: preset.name,
       description: '',
-      models,
-      type: 'built-in' as const
+      models: preset.models,
+      type: 'custom' as const // Mark as custom since interface only allows 'custom'
     }));
     return [...builtInPresets, ...customPresets];
   };
@@ -326,13 +353,28 @@ export default function Home() {
     }
   };
 
-  const toggleModel = (provider: string, model: string) => {
-    const modelKey = `${provider}:${model}`;
+  const toggleModel = (providerKey: string, model: string) => {
+    const modelKey = `${providerKey}:${model}`;
     setSelectedModels(prev => 
-      prev.includes(modelKey)
+      prev.includes(modelKey) 
         ? prev.filter(m => m !== modelKey)
         : [...prev, modelKey]
     );
+  };
+
+  const addModelFromDropdown = () => {
+    if (selectedProvider && selectedModel) {
+      const modelKey = `${selectedProvider}:${selectedModel}`;
+      if (!selectedModels.includes(modelKey)) {
+        setSelectedModels(prev => [...prev, modelKey]);
+        toast.success(`Added ${selectedModel}`);
+      } else {
+        toast.info('Model already added');
+      }
+      // Reset selections
+      setSelectedProvider('');
+      setSelectedModel('');
+    }
   };
 
   const toggleMenuGroup = (group: string) => {
@@ -983,10 +1025,70 @@ export default function Home() {
               </div>
             )}
 
-            {/* Model List - Collapsible Provider Sections - Hide when showing Presets */}
+            {/* Model Selection Dropdowns - Hide when showing Presets */}
             {!showPresets && (
-            <div className="space-y-2">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Available Providers</h3>
+            <div className="space-y-3">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Add Models</h3>
+              
+              {/* Provider Dropdown */}
+              <div className="px-3">
+                <label className="text-xs font-medium mb-2 block">Select Provider</label>
+                <Select value={selectedProvider} onValueChange={(value) => {
+                  setSelectedProvider(value);
+                  setSelectedModel(''); // Reset model when provider changes
+                }}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
+                      <SelectItem key={key} value={key}>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${provider.color}`} />
+                          {provider.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Model Dropdown */}
+              {selectedProvider && (
+                <div className="px-3">
+                  <label className="text-xs font-medium mb-2 block">Select Model</label>
+                  <Select value={selectedModel} onValueChange={setSelectedModel}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Choose a model" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {AI_PROVIDERS[selectedProvider as keyof typeof AI_PROVIDERS]?.models.map((model) => (
+                        <SelectItem key={model} value={model}>
+                          {model}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {/* Add Button */}
+              {selectedProvider && selectedModel && (
+                <div className="px-3">
+                  <Button
+                    onClick={addModelFromDropdown}
+                    className="w-full"
+                    size="sm"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add {selectedModel}
+                  </Button>
+                </div>
+              )}
+
+              {/* Collapsible Provider Sections (kept for reference/browsing) */}
+              <div className="mt-4">
+                <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Browse All Providers</h3>
               {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
                 <div key={key} className="border border-border rounded-lg overflow-hidden">
                   {/* Provider Header - Clickable */}
@@ -1027,6 +1129,7 @@ export default function Home() {
                   )}
                 </div>
               ))}
+              </div>
             </div>
             )}
           </div>
@@ -1398,13 +1501,13 @@ export default function Home() {
                     </div>
                     <button
                       onClick={() => {
-                        openPresetEditor();
+                        setShowPresetsManagement(true);
                         setShowSettings(false);
                       }}
                       className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
                     >
                       <Zap className="h-4 w-4" />
-                      <span className="text-sm">Manage Presets</span>
+                      <span className="text-sm">Presets Setting</span>
                     </button>
                     <button
                       onClick={() => {
@@ -1610,6 +1713,22 @@ export default function Home() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Presets Management Modal */}
+      {showPresetsManagement && (
+        <PresetsManagement
+          AI_PROVIDERS={AI_PROVIDERS}
+          customPresets={customPresets}
+          builtInPresets={MODEL_PRESETS}
+          defaultModels={defaultModels}
+          onSaveCustomPresets={saveCustomPresets}
+          onSaveDefaultModels={(models) => {
+            setDefaultModels(models);
+            localStorage.setItem('defaultModels', JSON.stringify(models));
+          }}
+          onClose={() => setShowPresetsManagement(false)}
+        />
       )}
     </div>
   );
