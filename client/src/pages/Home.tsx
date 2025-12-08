@@ -433,6 +433,7 @@ export default function Home() {
   const applyPreset = (preset: CustomPreset) => {
     setSelectedModels(preset.models);
     setShowPresets(false);
+    setShowModelSelector(false);
     toast.success(`Applied preset: ${preset.name}`);
   };
 
@@ -1402,7 +1403,10 @@ export default function Home() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setShowModelSelector(!showModelSelector)}
+              onClick={() => {
+                setShowPresets(false);
+                setShowModelSelector(!showModelSelector);
+              }}
               className="text-[10px] h-7 px-2 shrink-0"
             >
               Models
@@ -1514,7 +1518,10 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setShowPresets(!showPresets)}
+                onClick={() => {
+                  setShowPresets(true);
+                  setShowModelSelector(true);
+                }}
                 className="text-[10px] h-7 px-2 shrink-0"
               >
                 Presets
