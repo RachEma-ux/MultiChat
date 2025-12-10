@@ -88,6 +88,9 @@ export function ChatFooter({
         className="hidden"
         onChange={(e) => {
           const files = Array.from(e.target.files || []);
+          if (onAttach && files.length > 0) {
+            onAttach();
+          }
           toast.success(`${files.length} file(s) attached`);
           e.target.value = '';
         }}

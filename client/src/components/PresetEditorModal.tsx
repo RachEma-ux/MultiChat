@@ -1,24 +1,15 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
-import { X } from 'lucide-react';
+import { X, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { AI_PROVIDERS } from '@/lib/ai-providers';
+import { CustomPreset } from './PresetsManagementModal';
 
 interface SelectedModel {
   provider: string;
   model: string;
 }
-
-interface CustomPreset {
-  id: string;
-  name: string;
-  description?: string;
-  models: SelectedModel[];
-  isCustom: boolean;
-}
-
 interface PresetEditorModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -140,10 +131,12 @@ export function PresetEditorModal({ isOpen, onClose, editingPreset, onSave }: Pr
                   <div className="pl-5 space-y-2">
                     {provider.models.map((model) => (
                       <div key={model} className="flex items-center gap-2">
-                        <Checkbox
+                        <input
+                          type="checkbox"
                           id={`${key}-${model}`}
                           checked={isModelSelected(key, model)}
-                          onCheckedChange={() => toggleModel(key, model)}
+                          onChange={() => toggleModel(key, model)}
+                          className="h-4 w-4"
                         />
                         <label
                           htmlFor={`${key}-${model}`}

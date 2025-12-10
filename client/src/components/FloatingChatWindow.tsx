@@ -7,6 +7,7 @@ import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
 import { SettingsMenu } from './SettingsMenu';
 import { PresetEditorModal } from './PresetEditorModal';
+import { PresetsManagementModal, CustomPreset } from './PresetsManagementModal';
 import { RenameChatDialog } from './RenameChatDialog';
 import { AnalyticsPanel } from './AnalyticsPanel';
 import { AI_PROVIDERS } from '@/lib/ai-providers';
@@ -20,14 +21,7 @@ interface Attachment {
 }
 
 // Using SavedConvo from ChatFooter to avoid type conflicts
-
-interface CustomPreset {
-  id: string;
-  name: string;
-  description?: string;
-  models: { provider: string; model: string }[];
-  isCustom: boolean;
-}
+// Using CustomPreset from PresetsManagementModal to avoid type conflicts
 
 interface FloatingChatWindowProps {
   id: string;
@@ -64,6 +58,9 @@ export function FloatingChatWindow({
   const [editingPreset, setEditingPreset] = useState<CustomPreset | null>(null);
   const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editTitleValue, setEditTitleValue] = useState('');
+  const [showPresetsManagement, setShowPresetsManagement] = useState(false);
 
   // Load saved conversations and custom presets from localStorage on mount
   useEffect(() => {
@@ -231,7 +228,8 @@ export function FloatingChatWindow({
   };
 
   const renameChat = () => {
-    setShowRenameDialog(true);
+    setIsEditingTitle(true);
+    setEditTitleValue(conversationTitle);
   };
 
   const handleRename = (newTitle: string) => {
@@ -299,8 +297,7 @@ export function FloatingChatWindow({
   };
 
   const openPresetsSettings = () => {
-    setShowPresetEditor(true);
-    setEditingPreset(null);
+    setShowPresetsManagement(true);
   };
 
   const savePreset = (preset: CustomPreset) => {
@@ -348,7 +345,48 @@ export function FloatingChatWindow({
         {/* Header */}
         <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0">
           <div className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0">
-            <span className="text-sm font-medium truncate">Chat {id}</span>
+            {isEditingTitle ? (
+              <div className="flex items-center gap-2 flex-1">
+                <input
+                  type="text"
+                  value={editTitleValue}
+                  onChange={(e) => setEditTitleValue(e.target.value)}
+                  className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setConversationTitle(editTitleValue);
+                      setIsEditingTitle(false);
+                      toast.success('Title updated');
+                    } else if (e.key === 'Escape') {
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setConversationTitle(editTitleValue);
+                    setIsEditingTitle(false);
+                    toast.success('Title updated');
+                  }}
+                  className="h-6 px-2 text-xs"
+                >
+                  Save
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingTitle(false)}
+                  className="h-6 px-2 text-xs"
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <span className="text-sm font-medium truncate">{conversationTitle}</span>
+            )}
           </div>
           
           <div className="flex items-center gap-1 shrink-0">
@@ -532,6 +570,15 @@ export function FloatingChatWindow({
       }}
       editingPreset={editingPreset}
       onSave={savePreset}
+    />
+    
+    {/* Presets Management Modal */}
+    <PresetsManagementModal
+      isOpen={showPresetsManagement}
+      onClose={() => setShowPresetsManagement(false)}
+      customPresets={customPresets}
+      onSavePreset={savePreset}
+      editingPreset={editingPreset}
     />
     
     {/* Rename Chat Dialog */}
