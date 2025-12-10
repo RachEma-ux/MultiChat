@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
-import { X, Minus, Maximize2, Minimize2, Pin, PinOff } from 'lucide-react';
+import { X, Minus, Maximize2, Minimize2, Pin, PinOff, Menu, Plus, Settings, Save } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface FloatingChatWindowProps {
   id: string;
@@ -57,12 +58,12 @@ export function FloatingChatWindow({
         }}
       >
         {/* Window Header */}
-        <div className="drag-handle flex items-center justify-between px-3 py-2 border-b border-border bg-card cursor-move">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card">
+          <div className="drag-handle flex items-center gap-2 cursor-move flex-1">
             <span className="text-sm font-semibold">Chat {id}</span>
           </div>
           
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" style={{ pointerEvents: 'auto' }}>
             {/* Pin/Unpin Button */}
             <Button
               variant="ghost"
@@ -70,9 +71,15 @@ export function FloatingChatWindow({
               className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 togglePin();
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                togglePin();
+              }}
               title={isPinned ? 'Unpin' : 'Pin'}
             >
               {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
@@ -85,9 +92,15 @@ export function FloatingChatWindow({
               className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 toggleMinimize();
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleMinimize();
+              }}
               title={isMinimized ? 'Restore' : 'Minimize'}
             >
               <Minus className="h-4 w-4" />
@@ -100,9 +113,15 @@ export function FloatingChatWindow({
               className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 toggleMaximize();
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleMaximize();
+              }}
               title={isMaximized ? 'Restore' : 'Maximize'}
             >
               {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -115,9 +134,15 @@ export function FloatingChatWindow({
               className="h-7 w-7"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onClose();
               }}
               onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onClose();
+              }}
               title="Close"
             >
               <X className="h-4 w-4" />
@@ -136,16 +161,79 @@ export function FloatingChatWindow({
               </div>
             </div>
             
-            {/* Footer Placeholder */}
-            <div className="border-t border-border p-3">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  placeholder="Select at least one AI model to send a message"
-                  className="flex-1 px-3 py-2 bg-background border border-border rounded-md text-sm"
-                  disabled
-                />
-                <Button size="sm" disabled>Send</Button>
+            {/* Footer Control Panel */}
+            <div className="border-t border-border p-2 md:p-3">
+              <div className="flex items-center gap-1 md:gap-2 justify-between">
+                {/* Left side controls */}
+                <div className="flex items-center gap-1">
+                  {/* Hamburger Menu */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toast.info('Menu coming soon')}
+                    className="h-7 w-7 shrink-0"
+                    title="Menu"
+                  >
+                    <Menu className="h-3.5 w-3.5" />
+                  </Button>
+                  
+                  {/* Plus Button */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toast.info('New chat coming soon')}
+                    className="h-7 w-7 shrink-0"
+                    title="New Chat"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                  
+                  {/* Models Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toast.info('Model selection coming soon')}
+                    className="text-[10px] h-7 px-2 shrink-0"
+                  >
+                    0 Models
+                  </Button>
+                </div>
+                
+                {/* Right side controls */}
+                <div className="flex items-center gap-1">
+                  {/* Settings Icon */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toast.info('Settings coming soon')}
+                    className="h-7 w-7 shrink-0"
+                    title="Settings"
+                  >
+                    <Settings className="h-3.5 w-3.5" />
+                  </Button>
+                  
+                  {/* Save Icon */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => toast.info('Save coming soon')}
+                    disabled={true}
+                    title="Save Conversation"
+                    className="h-7 w-7 shrink-0"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                  </Button>
+                  
+                  {/* Presets Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => toast.info('Presets coming soon')}
+                    className="text-[10px] h-7 px-2 shrink-0"
+                  >
+                    Presets
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
