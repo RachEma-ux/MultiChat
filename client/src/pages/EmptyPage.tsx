@@ -1,15 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
-import { FloatingChatWindow } from '@/components/FloatingChatWindow';
-import { Menu, Download, X, Plus } from 'lucide-react';
+import { Menu, Download, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { toast } from 'sonner';
-
-interface ChatWindow {
-  id: string;
-  position: { x: number; y: number };
-}
 
 export default function EmptyPage() {
   const [, setLocation] = useLocation();
@@ -17,24 +11,6 @@ export default function EmptyPage() {
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [currentMode, setCurrentMode] = useState('Empty');
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
-  const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
-
-  // Load saved windows from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('floatingChatWindows');
-    if (saved) {
-      try {
-        setChatWindows(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load chat windows:', e);
-      }
-    }
-  }, []);
-
-  // Save windows to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('floatingChatWindows', JSON.stringify(chatWindows));
-  }, [chatWindows]);
 
   const toggleMenuGroup = (groupName: string) => {
     setExpandedMenuGroups(prev => {
@@ -46,35 +22,6 @@ export default function EmptyPage() {
       }
       return newSet;
     });
-  };
-
-  const addNewChatWindow = () => {
-    if (chatWindows.length >= 3) {
-      toast.error('Maximum 3 chat windows allowed');
-      return;
-    }
-
-    const newWindow: ChatWindow = {
-      id: `${Date.now()}`,
-      position: {
-        x: 100 + (chatWindows.length * 30),
-        y: 100 + (chatWindows.length * 30)
-      }
-    };
-
-    setChatWindows([...chatWindows, newWindow]);
-    toast.success('New chat window opened');
-  };
-
-  const closeChatWindow = (id: string) => {
-    setChatWindows(chatWindows.filter(w => w.id !== id));
-    toast.info('Chat window closed');
-  };
-
-  const updateWindowPosition = (id: string, position: { x: number; y: number }) => {
-    setChatWindows(chatWindows.map(w =>
-      w.id === id ? { ...w, position } : w
-    ));
   };
 
   return (
@@ -89,7 +36,7 @@ export default function EmptyPage() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-base md:text-lg font-semibold">Multi-AI Chat</h1>
+          <h1 className="text-base md:text-lg font-semibold">New Chat</h1>
         </div>
         
         <div className="flex items-center gap-1 md:gap-2">
@@ -230,44 +177,9 @@ export default function EmptyPage() {
         </>
       )}
 
-      {/* Main Content Area with New Chat Button */}
-      <div className="flex-1 relative bg-background">
-        {chatWindows.length === 0 && (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <div className="text-6xl mb-4">💬</div>
-              <h2 className="text-2xl font-semibold mb-2">Welcome to Multi-AI Chat</h2>
-              <p className="text-muted-foreground mb-6">Open a new chat window to start conversing with multiple AIs</p>
-              <Button onClick={addNewChatWindow} size="lg">
-                <Plus className="h-5 w-5 mr-2" />
-                New Chat Window
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Floating Chat Windows */}
-        {chatWindows.map((window) => (
-          <FloatingChatWindow
-            key={window.id}
-            id={window.id}
-            initialPosition={window.position}
-            onClose={() => closeChatWindow(window.id)}
-            onPositionChange={(pos) => updateWindowPosition(window.id, pos)}
-          />
-        ))}
-
-        {/* Floating Action Button for New Chat (when windows exist) */}
-        {chatWindows.length > 0 && chatWindows.length < 3 && (
-          <Button
-            onClick={addNewChatWindow}
-            size="lg"
-            className="fixed bottom-6 right-6 rounded-full h-14 w-14 shadow-lg z-[999]"
-            title="New Chat Window"
-          >
-            <Plus className="h-6 w-6" />
-          </Button>
-        )}
+      {/* Empty Main Content - Just blank space */}
+      <div className="flex-1 bg-background">
+        {/* Completely empty - no content */}
       </div>
     </div>
   );
