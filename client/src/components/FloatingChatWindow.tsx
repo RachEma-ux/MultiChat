@@ -151,8 +151,10 @@ export function FloatingChatWindow({
               selectedModelsCount={0}
               onModelsClick={() => toast.info('Models selection coming soon')}
               onNewChat={() => toast.info('New chat coming soon')}
-              onSave={() => toast.info('Save coming soon')}
-              onSettingsClick={() => {}}
+              onSave={() => toast.info('Copy/Save conversation coming soon')}
+              onSettingsClick={() => toast.info('Settings coming soon')}
+              onSummarizerClick={() => toast.info('Summarizer coming soon')}
+              onPresetsClick={() => toast.info('Presets coming soon')}
               inputMessage={inputMessage}
               onInputChange={setInputMessage}
               onSend={handleSend}

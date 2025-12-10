@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, Settings, Save, Paperclip, Send } from 'lucide-react';
+import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ChatFooterProps {
@@ -9,6 +9,8 @@ interface ChatFooterProps {
   onNewChat?: () => void;
   onSave?: () => void;
   onSettingsClick?: () => void;
+  onSummarizerClick?: () => void;
+  onPresetsClick?: () => void;
   inputMessage?: string;
   onInputChange?: (value: string) => void;
   onSend?: () => void;
@@ -22,6 +24,8 @@ export function ChatFooter({
   onNewChat,
   onSave,
   onSettingsClick,
+  onSummarizerClick,
+  onPresetsClick,
   inputMessage = '',
   onInputChange,
   onSend,
@@ -152,6 +156,17 @@ export function ChatFooter({
           >
             {selectedModelsCount} Model{selectedModelsCount !== 1 ? 's' : ''}
           </Button>
+          
+          {/* Summarizer Icon */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={onSummarizerClick}
+            className="h-7 w-7 shrink-0"
+            title="Summarizer"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+          </Button>
         </div>
         
         {/* Right side controls */}
@@ -204,22 +219,22 @@ export function ChatFooter({
             )}
           </div>
           
-          {/* Save Icon */}
+          {/* Copy/Save Icon */}
           <Button
             variant="outline"
             size="icon"
             onClick={() => onSave?.()}
-            title="Save Conversation"
+            title="Copy/Save Conversation"
             className="h-7 w-7 shrink-0"
           >
-            <Save className="h-3.5 w-3.5" />
+            <Copy className="h-3.5 w-3.5" />
           </Button>
           
           {/* Presets Button */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => toast.info('Presets coming soon')}
+            onClick={onPresetsClick}
             className="text-[10px] h-7 px-2 shrink-0"
           >
             Presets
