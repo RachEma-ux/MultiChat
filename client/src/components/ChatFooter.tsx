@@ -422,14 +422,6 @@ export function ChatFooter({
             rows={1}
             className="w-full px-3 py-2.5 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
             style={{ lineHeight: '1.5', height: '40px', minHeight: '40px', maxHeight: '200px', overflowY: 'hidden' }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (inputMessage.trim() && selectedModelsCount > 0 && !isLoading) {
-                  onSend?.();
-                }
-              }
-            }}
           />
         </div>
         <Button
