@@ -132,6 +132,15 @@ export default function EmptyPage() {
                   >
                     Conversation
                   </button>
+                  <button
+                    onClick={() => {
+                      setShowModeMenu(false);
+                      toast.info('Already in Empty mode');
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors bg-accent"
+                  >
+                    Empty
+                  </button>
                 </div>
               </>
             )}

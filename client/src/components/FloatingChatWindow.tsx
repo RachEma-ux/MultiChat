@@ -62,13 +62,17 @@ export function FloatingChatWindow({
             <span className="text-sm font-semibold">Chat {id}</span>
           </div>
           
-          <div className="flex items-center gap-1" onMouseDown={(e) => e.stopPropagation()}>
+          <div className="flex items-center gap-1">
             {/* Pin/Unpin Button */}
             <Button
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={togglePin}
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePin();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
               title={isPinned ? 'Unpin' : 'Pin'}
             >
               {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
@@ -79,7 +83,11 @@ export function FloatingChatWindow({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={toggleMinimize}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMinimize();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
               title={isMinimized ? 'Restore' : 'Minimize'}
             >
               <Minus className="h-4 w-4" />
@@ -90,7 +98,11 @@ export function FloatingChatWindow({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={toggleMaximize}
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMaximize();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
               title={isMaximized ? 'Restore' : 'Maximize'}
             >
               {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -101,7 +113,11 @@ export function FloatingChatWindow({
               variant="ghost"
               size="icon"
               className="h-7 w-7"
-              onClick={onClose}
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+              onMouseDown={(e) => e.stopPropagation()}
               title="Close"
             >
               <X className="h-4 w-4" />
