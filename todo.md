@@ -42,3 +42,12 @@
 
 ## Phase 6: Final Checkpoint
 - [ ] Create checkpoint with complete adaptation
+
+## URGENT FIXES
+- [ ] Fix PresetEditorModal UI to match Reference Version screenshot exactly
+  - Show provider sections with colored dots (Anthropic=orange, OpenAI=green, Google=blue)
+  - Display checkboxes for each model under provider (blue checkmark when selected)
+  - Add Cancel and Update Preset buttons at bottom
+- [ ] Implement auto-growing textarea in ChatFooter
+  - Textarea should start at single line height
+  - Auto-expand as user types (up to reasonable max height)

@@ -76,6 +76,15 @@ export function ChatFooter({
   const [showFooterMenu, setShowFooterMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-grow textarea
+  const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onInputChange?.(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 200)}px`;
+    }
+  };
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -384,12 +393,12 @@ export function ChatFooter({
           <textarea
             ref={textareaRef}
             value={inputMessage}
-            onChange={(e) => onInputChange?.(e.target.value)}
+            onChange={handleTextareaChange}
             placeholder="Select at least one AI model to send a message"
             disabled={selectedModelsCount === 0}
             rows={1}
-            className="w-full min-h-[40px] max-h-[200px] px-3 py-2.5 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ lineHeight: '1.5' }}
+            className="w-full px-3 py-2.5 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 overflow-hidden"
+            style={{ lineHeight: '1.5', minHeight: '40px', maxHeight: '200px' }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();

@@ -136,7 +136,7 @@ export function PresetEditorModal({ isOpen, onClose, editingPreset, onSave }: Pr
                           id={`${key}-${model}`}
                           checked={isModelSelected(key, model)}
                           onChange={() => toggleModel(key, model)}
-                          className="h-4 w-4"
+                          className="h-4 w-4 rounded border-gray-600 bg-background checked:bg-blue-600 checked:border-blue-600 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 cursor-pointer"
                         />
                         <label
                           htmlFor={`${key}-${model}`}
