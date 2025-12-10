@@ -907,20 +907,7 @@ export default function Home() {
             >
               <Download className="h-5 w-5" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (window.confirm('Are you sure you want to close the app?')) {
-                  // Clear all data and navigate to empty page
-                  localStorage.clear();
-                  window.location.href = 'about:blank';
-                }
-              }}
-              title="Close Chat"
-            >
-              <X className="h-5 w-5" />
-            </Button>
+
           </div>
         </div>
 
@@ -994,7 +981,7 @@ export default function Home() {
               />
               <button
                 onClick={() => {
-                  if (window.confirm('Are you sure you want to close the app?')) {
+                  if (window.confirm('Are you sure you want to quit? All data will be cleared.')) {
                     // Clear all data and navigate to blank page
                     localStorage.clear();
                     window.location.href = 'about:blank';
@@ -1004,7 +991,7 @@ export default function Home() {
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left border-t border-border"
               >
                 <X className="h-4 w-4" />
-                <span className="text-sm font-medium">Close App</span>
+                <span className="text-sm font-medium">Quit</span>
               </button>
             </div>
           </>
