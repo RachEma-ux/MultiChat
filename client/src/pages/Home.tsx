@@ -1729,19 +1729,40 @@ export default function Home() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 p-4 border-t border-border">
+            <div className="flex items-center justify-between p-4 border-t border-border">
               <Button
                 variant="outline"
-                onClick={() => setShowPresetEditor(false)}
+                onClick={() => {
+                  if (window.confirm('Reset this preset to default settings?')) {
+                    // Find the original built-in preset
+                    const builtInPreset = Object.values(MODEL_PRESETS).find(p => p.name === presetEditorName);
+                    if (builtInPreset) {
+                      setPresetEditorModels([...builtInPreset.models]);
+                      setPresetEditorDescription('');
+                      toast.success('Preset reset to default');
+                    } else {
+                      toast.error('No default preset found with this name');
+                    }
+                  }
+                }}
+                disabled={!editingPreset}
               >
-                Cancel
+                Reset
               </Button>
-              <Button
-                onClick={savePreset}
-                disabled={!presetEditorName.trim() || presetEditorModels.length === 0}
-              >
-                {editingPreset ? 'Update Preset' : 'Create Preset'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowPresetEditor(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={savePreset}
+                  disabled={!presetEditorName.trim() || presetEditorModels.length === 0}
+                >
+                  {editingPreset ? 'Update Preset' : 'Create Preset'}
+                </Button>
+              </div>
             </div>
           </div>
         </>
