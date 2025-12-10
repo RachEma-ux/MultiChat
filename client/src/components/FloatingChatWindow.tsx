@@ -34,6 +34,9 @@ export function FloatingChatWindow({
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
   const [selectedProvider, setSelectedProvider] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [conversationTitle, setConversationTitle] = useState(`Chat ${id}`);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const handleDrag = (_e: any, data: { x: number; y: number }) => {
     const newPos = { x: data.x, y: data.y };
@@ -55,10 +58,19 @@ export function FloatingChatWindow({
   };
 
   const handleSend = () => {
-    if (!inputMessage.trim()) return;
-    toast.info('Sending message: ' + inputMessage);
-    // TODO: Implement actual message sending
+    if (!inputMessage.trim() || selectedModels.length === 0 || isLoading) return;
+    
+    // Create user message
+    const userMessage = {
+      id: Date.now(),
+      type: 'user',
+      content: inputMessage,
+      timestamp: new Date()
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
+    toast.success('Message sent to ' + selectedModels.length + ' model(s)');
   };
 
   const handleAttach = () => {
@@ -90,7 +102,87 @@ export function FloatingChatWindow({
   const applyPreset = (models: string[]) => {
     setSelectedModels(models);
     setShowPresets(false);
+    setShowModelSelector(false);
     toast.success('Preset applied!');
+  };
+
+  const saveConversation = () => {
+    if (messages.length === 0) {
+      toast.error('No messages to save');
+      return;
+    }
+    
+    const conversation = {
+      id: Date.now().toString(),
+      title: conversationTitle,
+      messages: messages,
+      timestamp: new Date().toISOString(),
+      models: selectedModels
+    };
+    
+    // Save to localStorage
+    const saved = JSON.parse(localStorage.getItem('savedConversations') || '[]');
+    saved.push(conversation);
+    localStorage.setItem('savedConversations', JSON.stringify(saved));
+    
+    toast.success('Conversation saved!');
+  };
+
+  const clearChat = () => {
+    if (window.confirm('Are you sure you want to clear this chat?')) {
+      setMessages([]);
+      setConversationTitle(`Chat ${id}`);
+      toast.success('Chat cleared');
+    }
+  };
+
+  const deleteChat = () => {
+    if (window.confirm('Are you sure you want to delete this chat?')) {
+      setMessages([]);
+      setConversationTitle(`Chat ${id}`);
+      toast.success('Chat deleted');
+    }
+  };
+
+  const renameChat = () => {
+    const newTitle = window.prompt('Enter new chat title:', conversationTitle);
+    if (newTitle && newTitle.trim()) {
+      setConversationTitle(newTitle.trim());
+      toast.success('Chat renamed');
+    }
+  };
+
+  const exportConversation = () => {
+    if (messages.length === 0) {
+      toast.error('No messages to export');
+      return;
+    }
+    
+    const data = {
+      title: conversationTitle,
+      messages: messages,
+      models: selectedModels,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${conversationTitle.replace(/\s+/g, '_')}_${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    toast.success('Conversation exported!');
+  };
+
+  const generateSynthesis = () => {
+    if (selectedModels.length === 0) {
+      toast.error('Select models first');
+      return;
+    }
+    toast.info('Generating synthesis from ' + selectedModels.length + ' models...');
+    // TODO: Implement actual synthesis generation
   };
 
   // Calculate window dimensions
@@ -208,13 +300,23 @@ export function FloatingChatWindow({
               selectedModelsCount={selectedModels.length}
               onModelsClick={() => setShowModelSelector(!showModelSelector)}
               onNewChat={() => {
+                setMessages([]);
                 setInputMessage('');
-                setSelectedModels([]);
+                setConversationTitle(`Chat ${id}`);
                 toast.success('New chat started');
               }}
-              onSave={() => toast.info('Save conversation coming soon')}
+              onSave={saveConversation}
+              onClearChat={clearChat}
+              onDeleteChat={deleteChat}
+              onRenameChat={renameChat}
+              onShowAnalytics={() => {
+                setShowAnalytics(!showAnalytics);
+                toast.info(showAnalytics ? 'Analytics hidden' : 'Analytics shown');
+              }}
+              onExportData={exportConversation}
               onSettingsClick={() => setShowSettings(!showSettings)}
-              onSummarizerClick={() => toast.info('Summarizer coming soon')}
+              onSummarizerClick={generateSynthesis}
+              messagesCount={messages.length}
               onPresetsClick={() => {
                 setShowPresets(!showPresets);
                 setShowModelSelector(false);

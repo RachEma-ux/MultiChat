@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles } from 'lucide-react';
+import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, Edit, Trash2, BarChart, MessageSquare, Archive, Download } from 'lucide-react';
 import { useState, useRef } from 'react';
 import { toast } from 'sonner';
 
@@ -16,6 +16,12 @@ interface ChatFooterProps {
   onSend?: () => void;
   onAttach?: () => void;
   isLoading?: boolean;
+  onClearChat?: () => void;
+  onDeleteChat?: () => void;
+  onRenameChat?: () => void;
+  onShowAnalytics?: () => void;
+  onExportData?: () => void;
+  messagesCount?: number;
 }
 
 export function ChatFooter({
@@ -30,7 +36,13 @@ export function ChatFooter({
   onSave,
   onSend,
   onAttach,
-  isLoading = false
+  isLoading = false,
+  onClearChat,
+  onDeleteChat,
+  onRenameChat,
+  onShowAnalytics,
+  onExportData,
+  messagesCount = 0
 }: ChatFooterProps) {
   const [showFooterMenu, setShowFooterMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -55,10 +67,10 @@ export function ChatFooter({
             {showFooterMenu && (
               <>
                 <div 
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-[9998]"
                   onClick={() => setShowFooterMenu(false)}
                 />
-                <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-[9999] border border-border overflow-hidden">
                   <button
                     onClick={() => {
                       onNewChat?.();
@@ -68,6 +80,16 @@ export function ChatFooter({
                   >
                     <Plus className="h-4 w-4" />
                     <span className="text-sm">New Chat</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onRenameChat?.();
+                      setShowFooterMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="text-sm">Rename Chat</span>
                   </button>
                   <button
                     onClick={() => {
@@ -81,12 +103,33 @@ export function ChatFooter({
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Clear chat coming soon');
+                      onClearChat?.();
                       setShowFooterMenu(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
                   >
+                    <Trash2 className="h-4 w-4" />
                     <span className="text-sm">Clear Chat</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onShowAnalytics?.();
+                      setShowFooterMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                  >
+                    <BarChart className="h-4 w-4" />
+                    <span className="text-sm">Show Analytics</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onDeleteChat?.();
+                      setShowFooterMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left text-red-500"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="text-sm">Delete Chat</span>
                   </button>
                 </div>
               </>
@@ -114,16 +157,18 @@ export function ChatFooter({
             {selectedModelsCount} Model{selectedModelsCount !== 1 ? 's' : ''}
           </Button>
           
-          {/* Summarizer Icon */}
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={onSummarizerClick}
-            className="h-7 w-7 shrink-0"
-            title="Summarizer"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-          </Button>
+          {/* Synthesizer Icon - Only show when models are selected */}
+          {selectedModelsCount > 0 && (
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={onSummarizerClick}
+              className="h-7 w-7 shrink-0"
+              title="Generate Synthesis"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+            </Button>
+          )}
           {/* Settings Icon */}
           <div className="relative">
             <Button
@@ -142,10 +187,10 @@ export function ChatFooter({
             {showSettings && (
               <>
                 <div 
-                  className="fixed inset-0 z-40"
+                  className="fixed inset-0 z-[9998]"
                   onClick={() => setShowSettings(false)}
                 />
-                <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-[9999] border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border">
                     <h3 className="text-sm font-semibold">Settings</h3>
                   </div>
@@ -160,11 +205,21 @@ export function ChatFooter({
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Export coming soon');
+                      toast.info('Language settings coming soon');
                       setShowSettings(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
                   >
+                    <span className="text-sm">Language</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onExportData?.();
+                      setShowSettings(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                  >
+                    <Download className="h-4 w-4" />
                     <span className="text-sm">Export Data</span>
                   </button>
                 </div>
@@ -177,6 +232,7 @@ export function ChatFooter({
             variant="outline"
             size="icon"
             onClick={() => onSave?.()}
+            disabled={messagesCount === 0}
             title="Save Conversation"
             className="h-7 w-7 shrink-0"
           >
