@@ -18,17 +18,7 @@ export default function EmptyPage() {
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
 
-  // Load saved windows from localStorage
-  useEffect(() => {
-    const saved = localStorage.getItem('floatingChatWindows');
-    if (saved) {
-      try {
-        setChatWindows(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load chat windows:', e);
-      }
-    }
-  }, []);
+  // Start with no windows - user must click Mode -> Chat to open windows
 
   // Save windows to localStorage whenever they change
   useEffect(() => {
