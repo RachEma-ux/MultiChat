@@ -1,35 +1,37 @@
 import { useState } from 'react';
 import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
-import { X, Minus, Maximize2, Minimize2, Pin, PinOff, Menu, Plus, Settings, Save } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X } from 'lucide-react';
+import { ChatFooter } from '@/components/ChatFooter';
 import { toast } from 'sonner';
 
 interface FloatingChatWindowProps {
   id: string;
-  onClose: () => void;
   initialPosition?: { x: number; y: number };
-  onPositionChange?: (position: { x: number; y: number }) => void;
+  onClose: () => void;
+  onPositionChange?: (pos: { x: number; y: number }) => void;
 }
 
 export function FloatingChatWindow({ 
   id, 
-  onClose, 
-  initialPosition = { x: 100, y: 100 },
+  initialPosition = { x: 50, y: 50 },
+  onClose,
   onPositionChange 
 }: FloatingChatWindowProps) {
+  const [position, setPosition] = useState(initialPosition);
   const [isPinned, setIsPinned] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
-  const [position, setPosition] = useState(initialPosition);
 
-  const handleDrag = (_e: any, data: any) => {
-    const newPosition = { x: data.x, y: data.y };
-    setPosition(newPosition);
-    onPositionChange?.(newPosition);
+  const handleDrag = (_e: any, data: { x: number; y: number }) => {
+    const newPos = { x: data.x, y: data.y };
+    setPosition(newPos);
+    onPositionChange?.(newPos);
   };
 
   const togglePin = () => {
     setIsPinned(!isPinned);
+    toast.info(isPinned ? 'Window unpinned' : 'Window pinned');
   };
 
   const toggleMinimize = () => {
@@ -40,126 +42,90 @@ export function FloatingChatWindow({
     setIsMaximized(!isMaximized);
   };
 
+  // Calculate window dimensions
+  const windowStyle: React.CSSProperties = {
+    zIndex: 1000,
+  };
+
+  if (isMaximized) {
+    windowStyle.width = 'calc(100vw - 32px)';
+    windowStyle.height = 'calc(100vh - 32px)';
+    windowStyle.left = '16px';
+    windowStyle.top = '16px';
+  } else if (isMinimized) {
+    windowStyle.width = '320px';
+    windowStyle.height = 'auto';
+  } else {
+    windowStyle.width = 'min(600px, 90vw)';
+    windowStyle.height = 'min(500px, 70vh)';
+  }
+
   return (
     <Draggable
-      key={`draggable-${isPinned}-${isMaximized}`}
       disabled={isPinned || isMaximized}
-      position={isPinned || isMaximized ? undefined : position}
-      defaultPosition={isPinned || isMaximized ? position : undefined}
+      position={isPinned || isMaximized ? { x: 0, y: 0 } : position}
       onDrag={handleDrag}
       handle=".drag-handle"
       bounds="parent"
     >
       <div
-        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${
-          isMaximized ? 'inset-4' : isMinimized ? 'w-80 h-12' : 'w-full md:w-[600px]'
-        }`}
-        style={{
-          zIndex: 1000,
-          ...(!isMaximized && !isMinimized ? { 
-            maxWidth: '90vw', 
-            height: 'min(450px, 60vh)',
-            maxHeight: '60vh'
-          } : {})
-        }}
+        className="fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        style={windowStyle}
       >
-        {/* Window Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card">
-          <div className="drag-handle flex items-center gap-2 cursor-move flex-1">
-            <span className="text-sm font-semibold">Chat {id}</span>
+        {/* Header */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0">
+          <div className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0">
+            <span className="text-sm font-medium truncate">Chat {id}</span>
           </div>
           
-          <div className="flex items-center gap-1" style={{ pointerEvents: 'auto' }}>
-            {/* Pin/Unpin Button */}
+          <div className="flex items-center gap-1 shrink-0">
             <Button
               variant="ghost"
               size="icon"
+              onClick={togglePin}
               className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                togglePin();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                togglePin();
-              }}
               title={isPinned ? 'Unpin' : 'Pin'}
             >
-              {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+              <Pin className={`h-3.5 w-3.5 ${isPinned ? 'fill-current' : ''}`} />
             </Button>
-            
-            {/* Minimize Button */}
             <Button
               variant="ghost"
               size="icon"
+              onClick={toggleMinimize}
               className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                toggleMinimize();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                toggleMinimize();
-              }}
               title={isMinimized ? 'Restore' : 'Minimize'}
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-3.5 w-3.5" />
             </Button>
-            
-            {/* Maximize/Restore Button */}
             <Button
               variant="ghost"
               size="icon"
+              onClick={toggleMaximize}
               className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                toggleMaximize();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                toggleMaximize();
-              }}
               title={isMaximized ? 'Restore' : 'Maximize'}
             >
-              {isMaximized ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              {isMaximized ? (
+                <Minimize2 className="h-3.5 w-3.5" />
+              ) : (
+                <Maximize2 className="h-3.5 w-3.5" />
+              )}
             </Button>
-            
-            {/* Close Button */}
             <Button
               variant="ghost"
               size="icon"
+              onClick={onClose}
               className="h-7 w-7"
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onClose();
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              onTouchStart={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onClose();
-              }}
               title="Close"
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
 
-        {/* Window Content */}
+        {/* Content - Only show if not minimized */}
         {!isMinimized && (
-          <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 p-4 overflow-auto">
+          <>
+            <div className="flex-1 p-4 overflow-auto min-h-0">
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <div className="text-6xl mb-4">💬</div>
                 <h2 className="text-xl font-semibold mb-2">Start a conversation with multiple AIs</h2>
@@ -167,82 +133,15 @@ export function FloatingChatWindow({
               </div>
             </div>
             
-            {/* Footer Control Panel */}
-            <div className="border-t border-border p-2 md:p-3 shrink-0">
-              <div className="flex items-center gap-1 md:gap-2 justify-between">
-                {/* Left side controls */}
-                <div className="flex items-center gap-1">
-                  {/* Hamburger Menu */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toast.info('Menu coming soon')}
-                    className="h-7 w-7 shrink-0"
-                    title="Menu"
-                  >
-                    <Menu className="h-3.5 w-3.5" />
-                  </Button>
-                  
-                  {/* Plus Button */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toast.info('New chat coming soon')}
-                    className="h-7 w-7 shrink-0"
-                    title="New Chat"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                  </Button>
-                  
-                  {/* Models Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toast.info('Model selection coming soon')}
-                    className="text-[10px] h-7 px-2 shrink-0"
-                  >
-                    0 Models
-                  </Button>
-                </div>
-                
-                {/* Right side controls */}
-                <div className="flex items-center gap-1">
-                  {/* Settings Icon */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toast.info('Settings coming soon')}
-                    className="h-7 w-7 shrink-0"
-                    title="Settings"
-                  >
-                    <Settings className="h-3.5 w-3.5" />
-                  </Button>
-                  
-                  {/* Save Icon */}
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => toast.info('Save coming soon')}
-                    disabled={true}
-                    title="Save Conversation"
-                    className="h-7 w-7 shrink-0"
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                  </Button>
-                  
-                  {/* Presets Button */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => toast.info('Presets coming soon')}
-                    className="text-[10px] h-7 px-2 shrink-0"
-                  >
-                    Presets
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
+            {/* Footer */}
+            <ChatFooter
+              selectedModelsCount={0}
+              onModelsClick={() => toast.info('Models selection coming soon')}
+              onNewChat={() => toast.info('New chat coming soon')}
+              onSave={() => toast.info('Save coming soon')}
+              onSettingsClick={() => {}}
+            />
+          </>
         )}
       </div>
     </Draggable>
