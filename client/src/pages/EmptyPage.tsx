@@ -1,16 +1,39 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
+import { FloatingChatWindow } from '@/components/FloatingChatWindow';
 import { Menu, Download, X } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { toast } from 'sonner';
+
+interface ChatWindow {
+  id: string;
+  position: { x: number; y: number };
+}
 
 export default function EmptyPage() {
   const [, setLocation] = useLocation();
   const [showMenu, setShowMenu] = useState(false);
   const [showModeMenu, setShowModeMenu] = useState(false);
-  const [currentMode, setCurrentMode] = useState('Empty');
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
+  const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
+
+  // Load saved windows from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('floatingChatWindows');
+    if (saved) {
+      try {
+        setChatWindows(JSON.parse(saved));
+      } catch (e) {
+        console.error('Failed to load chat windows:', e);
+      }
+    }
+  }, []);
+
+  // Save windows to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('floatingChatWindows', JSON.stringify(chatWindows));
+  }, [chatWindows]);
 
   const toggleMenuGroup = (groupName: string) => {
     setExpandedMenuGroups(prev => {
@@ -24,6 +47,38 @@ export default function EmptyPage() {
     });
   };
 
+  const addNewChatWindow = () => {
+    if (chatWindows.length >= 3) {
+      toast.error('Maximum 3 chat windows allowed');
+      return;
+    }
+
+    const newWindow: ChatWindow = {
+      id: `${Date.now()}`,
+      position: {
+        x: 100 + (chatWindows.length * 30),
+        y: 100 + (chatWindows.length * 30)
+      }
+    };
+
+    setChatWindows([...chatWindows, newWindow]);
+    toast.success('New chat window opened');
+  };
+
+  const closeChatWindow = (id: string) => {
+    setChatWindows(chatWindows.filter(w => w.id !== id));
+    toast.info('Chat window closed');
+  };
+
+  const updateWindowPosition = (id: string, position: { x: number; y: number }) => {
+    setChatWindows(chatWindows.map(w =>
+      w.id === id ? { ...w, position } : w
+    ));
+  };
+
+  // Determine what to show in Mode selector
+  const chatModeLabel = chatWindows.length > 0 ? 'Add New Chat Window' : 'Chat';
+
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
@@ -36,7 +91,7 @@ export default function EmptyPage() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-base md:text-lg font-semibold">New Chat</h1>
+          <h1 className="text-base md:text-lg font-semibold">Multi-AI Chat</h1>
         </div>
         
         <div className="flex items-center gap-1 md:gap-2">
@@ -56,29 +111,37 @@ export default function EmptyPage() {
                   className="fixed inset-0 z-40"
                   onClick={() => setShowModeMenu(false)}
                 />
-                <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                  {['Agents', 'Chat', 'Conversation', 'Empty'].map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => {
-                        setCurrentMode(mode as any);
-                        setShowModeMenu(false);
-                        if (mode === 'Chat') {
-                          setLocation('/chat');
-                        } else if (mode === 'Conversation') {
-                          setLocation('/conversation');
-                        } else if (mode === 'Empty') {
-                          setLocation('/empty');
-                        }
-                        toast.info(`Switched to ${mode} mode`);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                        currentMode === mode ? 'bg-accent' : ''
-                      }`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
+                <div className="absolute top-full right-0 mt-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setShowModeMenu(false);
+                      // Agents mode - not implemented yet
+                      toast.info('Agents mode coming soon');
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                  >
+                    Agents
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowModeMenu(false);
+                      addNewChatWindow();
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    disabled={chatWindows.length >= 3}
+                  >
+                    {chatModeLabel}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowModeMenu(false);
+                      setLocation('/conversation');
+                      toast.info('Switched to Conversation mode');
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                  >
+                    Conversation
+                  </button>
                 </div>
               </>
             )}
@@ -177,9 +240,18 @@ export default function EmptyPage() {
         </>
       )}
 
-      {/* Empty Main Content - Just blank space */}
-      <div className="flex-1 bg-background">
-        {/* Completely empty - no content */}
+      {/* Empty Main Content - Background for floating windows */}
+      <div className="flex-1 bg-background relative">
+        {/* Floating Chat Windows */}
+        {chatWindows.map((window) => (
+          <FloatingChatWindow
+            key={window.id}
+            id={window.id}
+            initialPosition={window.position}
+            onClose={() => closeChatWindow(window.id)}
+            onPositionChange={(pos) => updateWindowPosition(window.id, pos)}
+          />
+        ))}
       </div>
     </div>
   );
