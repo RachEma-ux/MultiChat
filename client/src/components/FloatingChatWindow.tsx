@@ -7,6 +7,8 @@ import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
 import { SettingsMenu } from './SettingsMenu';
 import { PresetEditorModal } from './PresetEditorModal';
+import { RenameChatDialog } from './RenameChatDialog';
+import { AnalyticsPanel } from './AnalyticsPanel';
 import { AI_PROVIDERS } from '@/lib/ai-providers';
 import { toast } from 'sonner';
 
@@ -61,6 +63,7 @@ export function FloatingChatWindow({
   const [showPresetEditor, setShowPresetEditor] = useState(false);
   const [editingPreset, setEditingPreset] = useState<CustomPreset | null>(null);
   const [customPresets, setCustomPresets] = useState<CustomPreset[]>([]);
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
 
   // Load saved conversations and custom presets from localStorage on mount
   useEffect(() => {
@@ -91,8 +94,10 @@ export function FloatingChatWindow({
     setIsMaximized(!isMaximized);
   };
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputMessage.trim() || selectedModels.length === 0 || isLoading) return;
+    
+    setIsLoading(true);
     
     // Create user message
     const userMessage = {
@@ -104,9 +109,44 @@ export function FloatingChatWindow({
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const userMessageContent = inputMessage;
     setInputMessage('');
     setAttachments([]);
-    toast.success('Message sent to ' + selectedModels.length + ' model(s)');
+    
+    // Simulate AI responses from each selected model
+    for (let i = 0; i < selectedModels.length; i++) {
+      const modelKey = selectedModels[i];
+      const [provider, model] = modelKey.split(':');
+      
+      // Add typing indicator
+      const typingId = `typing-${Date.now()}-${i}`;
+      setMessages(prev => [...prev, {
+        id: typingId,
+        type: 'typing',
+        provider,
+        model,
+        timestamp: new Date()
+      }]);
+      
+      // Simulate API delay (1-3 seconds)
+      await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 2000));
+      
+      // Remove typing indicator and add AI response
+      setMessages(prev => {
+        const filtered = prev.filter(m => m.id !== typingId);
+        return [...filtered, {
+          id: Date.now() + i,
+          type: 'ai',
+          provider,
+          model,
+          content: `This is a simulated response from ${model} (${provider}). In a real implementation, this would be the actual AI response to: "${userMessageContent}"`,
+          timestamp: new Date()
+        }];
+      });
+    }
+    
+    setIsLoading(false);
+    toast.success(`Received ${selectedModels.length} response(s)`);
   };
 
   const handleFileUpload = (files: File[]) => {
@@ -172,6 +212,9 @@ export function FloatingChatWindow({
     saved.push(conversation);
     localStorage.setItem('savedConversations', JSON.stringify(saved));
     
+    // Update state to show in Recent Conversations immediately
+    setSavedConversations(saved);
+    
     toast.success('Conversation saved!');
   };
 
@@ -188,11 +231,12 @@ export function FloatingChatWindow({
   };
 
   const renameChat = () => {
-    const newTitle = window.prompt('Enter new chat title:', conversationTitle);
-    if (newTitle && newTitle.trim()) {
-      setConversationTitle(newTitle.trim());
-      toast.success('Chat renamed');
-    }
+    setShowRenameDialog(true);
+  };
+
+  const handleRename = (newTitle: string) => {
+    setConversationTitle(newTitle);
+    toast.success('Chat renamed');
   };
 
   const exportConversation = () => {
@@ -374,11 +418,66 @@ export function FloatingChatWindow({
             )}
 
             <div className="flex-1 p-4 overflow-auto min-h-0">
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="text-6xl mb-4">💬</div>
-                <h2 className="text-xl font-semibold mb-2">Start a conversation with multiple AIs</h2>
-                <p className="text-sm text-muted-foreground">Select models and send a message</p>
-              </div>
+              {messages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <div className="text-6xl mb-4">💬</div>
+                  <h2 className="text-xl font-semibold mb-2">Start a conversation with multiple AIs</h2>
+                  <p className="text-sm text-muted-foreground">Select models and send a message</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {messages.map((message) => (
+                    <div key={message.id} className="flex flex-col gap-2">
+                      {message.type === 'user' && (
+                        <div className="flex justify-end">
+                          <div className="max-w-[80%] bg-primary text-primary-foreground rounded-lg px-4 py-2">
+                            <div className="text-sm">{message.content}</div>
+                            {message.attachments && message.attachments.length > 0 && (
+                              <div className="mt-2 space-y-1">
+                                {message.attachments.map((att: any, idx: number) => (
+                                  <div key={idx} className="text-xs opacity-80">📎 {att.name}</div>
+                                ))}
+                              </div>
+                            )}
+                            <div className="text-xs opacity-70 mt-1">
+                              {new Date(message.timestamp).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {message.type === 'ai' && (
+                        <div className="flex justify-start">
+                          <div className="max-w-[80%] bg-card border border-border rounded-lg px-4 py-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              <div className={`w-2 h-2 rounded-full ${getProviderColor(message.provider)}`} />
+                              <span className="text-xs font-semibold">{message.model}</span>
+                            </div>
+                            <div className="text-sm">{message.content}</div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              {new Date(message.timestamp).toLocaleTimeString()}
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {message.type === 'typing' && (
+                        <div className="flex justify-start">
+                          <div className="max-w-[80%] bg-card border border-border rounded-lg px-4 py-2">
+                            <div className="flex items-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getProviderColor(message.provider)}`} />
+                              <span className="text-xs font-semibold">{message.model}</span>
+                            </div>
+                            <div className="flex items-center gap-1 mt-1">
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '0ms'}} />
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '150ms'}} />
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{animationDelay: '300ms'}} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             {/* Footer */}
@@ -397,7 +496,6 @@ export function FloatingChatWindow({
               onRenameChat={renameChat}
               onShowAnalytics={() => {
                 setShowAnalytics(!showAnalytics);
-                toast.info(showAnalytics ? 'Analytics hidden' : 'Analytics shown');
               }}
               onExportData={exportConversation}
               onPresetsSettings={openPresetsSettings}
@@ -434,6 +532,22 @@ export function FloatingChatWindow({
       }}
       editingPreset={editingPreset}
       onSave={savePreset}
+    />
+    
+    {/* Rename Chat Dialog */}
+    <RenameChatDialog
+      isOpen={showRenameDialog}
+      currentTitle={conversationTitle}
+      onClose={() => setShowRenameDialog(false)}
+      onRename={handleRename}
+    />
+    
+    {/* Analytics Panel */}
+    <AnalyticsPanel
+      isOpen={showAnalytics}
+      onClose={() => setShowAnalytics(false)}
+      messages={messages}
+      conversationTitle={conversationTitle}
     />
     </>
   );
