@@ -290,23 +290,66 @@ export default function Home() {
       return;
     }
 
-    const newPreset: CustomPreset = {
-      id: editingPreset?.id || `custom-${Date.now()}`,
-      name: presetEditorName,
-      description: presetEditorDescription,
-      models: [...presetEditorModels], // Create a new array copy
-      type: 'custom'
-    };
-
     let updatedPresets;
+    
     if (editingPreset) {
-      updatedPresets = customPresets.map(p => p.id === editingPreset.id ? newPreset : p);
-      toast.success('Preset updated successfully');
+      // Check if this is an existing custom preset or a built-in preset being edited
+      const existingCustomPreset = customPresets.find(p => p.id === editingPreset.id);
+      
+      if (existingCustomPreset) {
+        // Update existing custom preset
+        const newPreset: CustomPreset = {
+          id: editingPreset.id,
+          name: presetEditorName,
+          description: presetEditorDescription,
+          models: [...presetEditorModels],
+          type: 'custom'
+        };
+        updatedPresets = customPresets.map(p => p.id === editingPreset.id ? newPreset : p);
+        toast.success('Preset updated successfully');
+      } else {
+        // Editing a built-in preset or creating a custom version with same name
+        // Check if a custom preset with this name already exists
+        const existingByName = customPresets.find(p => p.name === presetEditorName);
+        
+        if (existingByName) {
+          // Update the existing custom preset with the same name
+          const newPreset: CustomPreset = {
+            id: existingByName.id,
+            name: presetEditorName,
+            description: presetEditorDescription,
+            models: [...presetEditorModels],
+            type: 'custom'
+          };
+          updatedPresets = customPresets.map(p => p.id === existingByName.id ? newPreset : p);
+          toast.success('Preset updated successfully');
+        } else {
+          // Create new custom preset (overriding built-in)
+          const newPreset: CustomPreset = {
+            id: `custom-${Date.now()}`,
+            name: presetEditorName,
+            description: presetEditorDescription,
+            models: [...presetEditorModels],
+            type: 'custom'
+          };
+          updatedPresets = [...customPresets, newPreset];
+          toast.success('Custom preset created');
+        }
+      }
     } else {
+      // Creating a brand new preset
+      const newPreset: CustomPreset = {
+        id: `custom-${Date.now()}`,
+        name: presetEditorName,
+        description: presetEditorDescription,
+        models: [...presetEditorModels],
+        type: 'custom'
+      };
       updatedPresets = [...customPresets, newPreset];
       toast.success('Preset created successfully');
     }
 
+    console.log('Saving presets to localStorage:', updatedPresets);
     saveCustomPresets(updatedPresets);
     setShowPresetEditor(false);
     // Reset editor state
@@ -869,9 +912,9 @@ export default function Home() {
               size="icon"
               onClick={() => {
                 if (window.confirm('Are you sure you want to close the app?')) {
-                  toast.info('Please close this browser tab/window manually');
-                  // Try to close, but it may not work in all contexts
-                  window.close();
+                  // Clear all data and navigate to empty page
+                  localStorage.clear();
+                  window.location.href = 'about:blank';
                 }
               }}
               title="Close Chat"
@@ -952,8 +995,9 @@ export default function Home() {
               <button
                 onClick={() => {
                   if (window.confirm('Are you sure you want to close the app?')) {
-                    toast.info('Please close this browser tab/window manually');
-                    window.close();
+                    // Clear all data and navigate to blank page
+                    localStorage.clear();
+                    window.location.href = 'about:blank';
                   }
                   setShowMenu(false);
                 }}
