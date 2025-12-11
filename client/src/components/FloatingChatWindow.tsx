@@ -10,7 +10,9 @@ import { PresetEditorModal } from './PresetEditorModal';
 import { PresetsManagementModal, CustomPreset } from './PresetsManagementModal';
 import { RenameChatDialog } from './RenameChatDialog';
 import { AnalyticsPanel } from './AnalyticsPanel';
+import { PresetSelectionDialog } from './PresetSelectionDialog';
 import { AI_PROVIDERS, MODEL_PRESETS } from '@/lib/ai-providers';
+import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset } from '@/lib/quick-presets';
 import { toast } from 'sonner';
 
 interface Attachment {
@@ -62,6 +64,9 @@ export function FloatingChatWindow({
   const [editTitleValue, setEditTitleValue] = useState('');
   const [showPresetsManagement, setShowPresetsManagement] = useState(false);
   const [defaultModels, setDefaultModels] = useState<string[]>([]);
+  const [quickPresets, setQuickPresets] = useState<QuickPreset[]>([]);
+  const [showPresetSelection, setShowPresetSelection] = useState(false);
+  const [editingQuickPresetId, setEditingQuickPresetId] = useState<string | null>(null);
 
   // Load saved conversations and custom presets from localStorage on mount
   useEffect(() => {
@@ -71,6 +76,8 @@ export function FloatingChatWindow({
     setArchivedConversations(archived);
     const presets = JSON.parse(localStorage.getItem('customPresets') || '[]');
     setCustomPresets(presets);
+    const quick = loadQuickPresets();
+    setQuickPresets(quick);
   }, []);
 
   const handleDrag = (_e: any, data: { x: number; y: number }) => {
@@ -308,8 +315,60 @@ export function FloatingChatWindow({
     
     setCustomPresets(updated);
     localStorage.setItem('customPresets', JSON.stringify(updated));
+    
+    // If editing a Quick Preset, update it too
+    if (editingQuickPresetId) {
+      const updatedQuick = updateQuickPreset(quickPresets, editingQuickPresetId, {
+        name: preset.name,
+        models: preset.models
+      });
+      setQuickPresets(updatedQuick);
+      saveQuickPresets(updatedQuick);
+      setEditingQuickPresetId(null);
+    }
+    
     setShowPresetEditor(false);
     setEditingPreset(null);
+  };
+
+  // Quick Presets handlers
+  const handleAddQuickPresets = (presets: Array<{ sourceId: string; sourceType: 'built-in' | 'custom'; name: string; models: string[] }>) => {
+    const updated = addQuickPresets(quickPresets, presets);
+    setQuickPresets(updated);
+    saveQuickPresets(updated);
+    toast.success(`Added ${presets.length} preset${presets.length > 1 ? 's' : ''} to Quick Presets`);
+  };
+
+  const handleEditQuickPreset = (id: string) => {
+    const preset = quickPresets.find(p => p.id === id);
+    if (!preset) return;
+    
+    // Open PresetEditorModal with the Quick Preset data
+    setEditingQuickPresetId(id);
+    setEditingPreset({
+      id: preset.id,
+      name: preset.name,
+      description: '',
+      models: preset.models,
+      type: 'custom'
+    });
+    setShowPresetEditor(true);
+  };
+
+  const handleDeleteQuickPreset = (id: string) => {
+    if (!confirm('Are you sure you want to remove this preset from Quick Presets?')) return;
+    
+    const updated = removeQuickPreset(quickPresets, id);
+    setQuickPresets(updated);
+    saveQuickPresets(updated);
+    toast.success('Preset removed from Quick Presets');
+  };
+
+  const handleRenameQuickPreset = (id: string, newName: string) => {
+    const updated = updateQuickPreset(quickPresets, id, { name: newName });
+    setQuickPresets(updated);
+    saveQuickPresets(updated);
+    toast.success('Preset renamed');
   };
 
   // Calculate window dimensions
@@ -453,7 +512,14 @@ export function FloatingChatWindow({
 
             {/* Presets Panel */}
             {showPresets && (
-              <PresetsPanel onApplyPreset={applyPreset} customPresets={customPresets} />
+              <PresetsPanel
+                onApplyPreset={applyPreset}
+                quickPresets={quickPresets}
+                onNewPreset={() => setShowPresetSelection(true)}
+                onEditPreset={handleEditQuickPreset}
+                onDeletePreset={handleDeleteQuickPreset}
+                onRenamePreset={handleRenameQuickPreset}
+              />
             )}
 
             <div className="flex-1 p-4 overflow-auto min-h-0">
@@ -606,6 +672,15 @@ export function FloatingChatWindow({
       onClose={() => setShowAnalytics(false)}
       messages={messages}
       conversationTitle={conversationTitle}
+    />
+
+    {/* Preset Selection Dialog */}
+    <PresetSelectionDialog
+      open={showPresetSelection}
+      onOpenChange={setShowPresetSelection}
+      customPresets={customPresets}
+      quickPresets={quickPresets}
+      onAdd={handleAddQuickPresets}
     />
     </>
   );
