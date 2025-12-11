@@ -52,6 +52,8 @@ export function PresetsManagementModal({
   const [presetName, setPresetName] = useState('');
   const [presetDescription, setPresetDescription] = useState('');
   const [presetModels, setPresetModels] = useState<string[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
 
   // Sync local state when props change
   useEffect(() => {
@@ -164,7 +166,7 @@ export function PresetsManagementModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
       <div className="bg-background border border-border rounded-lg w-full max-w-4xl max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -228,33 +230,103 @@ export function PresetsManagementModal({
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-2 block">Select Models</label>
-                    <div className="border border-border rounded-lg p-3 max-h-60 overflow-y-auto space-y-3">
-                      {Object.entries(AI_PROVIDERS).map(([providerKey, provider]) => (
-                        <div key={providerKey}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <div className={`w-2 h-2 rounded-full ${provider.color}`} />
-                            <span className="font-medium text-sm">{provider.name}</span>
-                          </div>
-                          <div className="ml-4 space-y-1">
-                            {provider.models.map(model => {
-                              const modelKey = `${providerKey}:${model}`;
-                              return (
-                                <label
-                                  key={modelKey}
-                                  className="flex items-center gap-2 p-2 hover:bg-accent rounded cursor-pointer"
-                                >
-                                  <Checkbox
-                                    checked={presetModels.includes(modelKey)}
-                                    onCheckedChange={() => togglePresetModel(modelKey)}
-                                  />
-                                  <span className="text-sm">{model}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                    <label className="text-sm font-medium mb-2 block">Add Models</label>
+                    <div className="space-y-3">
+                      {/* Provider Dropdown */}
+                      <div>
+                        <label className="text-sm text-muted-foreground mb-1 block">Select Provider</label>
+                        <Select
+                          value={selectedProvider}
+                          onValueChange={(value) => {
+                            setSelectedProvider(value);
+                            setSelectedModel('');
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Choose a provider" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
+                              <SelectItem key={key} value={key}>
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${provider.color}`} />
+                                  {provider.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Model Dropdown */}
+                      {selectedProvider && (
+                        <div>
+                          <label className="text-sm text-muted-foreground mb-1 block">Select Model</label>
+                          <Select
+                            value={selectedModel}
+                            onValueChange={setSelectedModel}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Choose a model" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {AI_PROVIDERS[selectedProvider]?.models.map((model) => (
+                                <SelectItem key={model} value={model}>
+                                  {model}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      ))}
+                      )}
+
+                      {/* Add Button */}
+                      {selectedProvider && selectedModel && (
+                        <Button
+                          onClick={() => {
+                            const modelKey = `${selectedProvider}:${selectedModel}`;
+                            if (!presetModels.includes(modelKey)) {
+                              setPresetModels([...presetModels, modelKey]);
+                              toast.success(`Added ${selectedModel}`);
+                            } else {
+                              toast.error('Model already added');
+                            }
+                          }}
+                          size="sm"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add {selectedModel}
+                        </Button>
+                      )}
+
+                      {/* Selected Models List */}
+                      {presetModels.length > 0 && (
+                        <div className="border border-border rounded-lg p-3 space-y-2">
+                          <div className="text-sm font-medium mb-2">Selected Models ({presetModels.length})</div>
+                          {presetModels.map((modelKey) => {
+                            const [providerKey, modelName] = modelKey.split(':');
+                            const provider = AI_PROVIDERS[providerKey];
+                            return (
+                              <div
+                                key={modelKey}
+                                className="flex items-center justify-between p-2 bg-accent rounded"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${provider?.color}`} />
+                                  <span className="text-sm">{modelName}</span>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => togglePresetModel(modelKey)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
 
