@@ -28,15 +28,10 @@ export function PresetsPanel({
   const handleStartRename = (preset: QuickPreset) => {
     setRenamingId(preset.id);
     setRenameValue(preset.name);
-    // Don't auto-focus to prevent keyboard popup
-  };
-
-  const handleRenameClick = () => {
-    // Only focus when user explicitly clicks the input
-    if (renameInputRef.current) {
-      renameInputRef.current.removeAttribute('readonly');
-      renameInputRef.current.focus();
-    }
+    // Focus will happen automatically when input renders
+    setTimeout(() => {
+      renameInputRef.current?.focus();
+    }, 50);
   };
 
   const handleRenameSubmit = () => {
@@ -88,10 +83,8 @@ export function PresetsPanel({
                   onChange={(e) => setRenameValue(e.target.value)}
                   onBlur={handleRenameSubmit}
                   onKeyDown={handleRenameKeyDown}
-                  onClick={handleRenameClick}
                   className="h-8 text-xs flex-1"
-                  autoFocus={false}
-                  readOnly
+                  autoFocus
                 />
               ) : (
                 <Button

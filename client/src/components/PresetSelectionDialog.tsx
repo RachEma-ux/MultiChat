@@ -87,13 +87,7 @@ export function PresetSelectionDialog({
     onOpenChange(false);
   };
 
-  // Enable search input only when user explicitly clicks it
-  const handleSearchClick = () => {
-    if (searchInputRef.current) {
-      searchInputRef.current.removeAttribute('readonly');
-      searchInputRef.current.focus();
-    }
-  };
+  // Removed readonly workaround - now input works directly
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -111,10 +105,8 @@ export function PresetSelectionDialog({
               placeholder="Search presets by name or model..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onClick={handleSearchClick}
               className="pl-9"
               autoFocus={false}
-              readOnly
             />
           </div>
 
