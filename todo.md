@@ -92,3 +92,50 @@
 - [x] Test inline rename functionality
 - [x] Verify all changes persist to localStorage
 - [ ] Create final checkpoint
+
+
+---
+
+# Quick Presets Refactoring - Separate Favorites System
+
+## Requirements:
+1. Quick Presets should be a separate "favorites/shortcuts" list
+2. Changes in Quick Presets should NOT affect original presets in Presets Management
+3. "+ New" button should open a selection dialog to add presets from Presets Management
+4. Edit/Delete icons should appear on ALL presets in Quick Presets (including built-in)
+5. Editing a preset in Quick Presets creates a local copy without modifying the original
+
+## Phase 1: Design and implement separate Quick Presets storage system
+- [ ] Create new localStorage key for Quick Presets (e.g., 'quickPresets')
+- [ ] Design QuickPreset interface with reference to original preset
+- [ ] Implement initialization: populate Quick Presets from original presets on first load
+- [ ] Update FloatingChatWindow to use separate Quick Presets state
+- [ ] Ensure Quick Presets can store local modifications without affecting originals
+
+## Phase 2: Create preset selection dialog for New button
+- [ ] Create PresetSelectionDialog component
+- [ ] Show all available presets (built-in + custom) from Presets Management
+- [ ] Allow multi-select or single-select to add to Quick Presets
+- [ ] Filter out presets already in Quick Presets
+- [ ] Add selected presets to Quick Presets list
+
+## Phase 3: Update Edit/Delete to work on all presets in Quick Presets
+- [ ] Show Edit/Delete icons on ALL presets in Quick Presets panel
+- [ ] Update Edit handler to create local copy when editing built-in presets
+- [ ] Update Delete handler to remove from Quick Presets only (not from originals)
+- [ ] Update Rename handler to modify Quick Presets only
+
+## Phase 4: Ensure Presets Management remains unchanged
+- [ ] Verify Presets Management modal uses original presets storage
+- [ ] Verify changes in Quick Presets don't affect Presets Management
+- [ ] Verify changes in Presets Management are reflected in Quick Presets (for unmodified presets)
+- [ ] Test edge cases: delete original preset that's in Quick Presets
+
+## Phase 5: Test complete separation and create checkpoint
+- [ ] Test adding presets via "+ New" button
+- [ ] Test editing built-in presets in Quick Presets
+- [ ] Test deleting presets from Quick Presets
+- [ ] Test renaming presets in Quick Presets
+- [ ] Verify Presets Management remains unchanged
+- [ ] Verify Quick Presets persists across page reloads
+- [ ] Create final checkpoint

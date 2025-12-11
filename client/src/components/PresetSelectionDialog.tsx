@@ -1,0 +1,182 @@
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search, Check } from 'lucide-react';
+import { MODEL_PRESETS } from '@/lib/ai-providers';
+import { CustomPreset } from './PresetsManagementModal';
+import { QuickPreset } from '@/lib/quick-presets';
+
+interface PresetSelectionDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  customPresets: CustomPreset[];
+  quickPresets: QuickPreset[];
+  onAdd: (presets: Array<{ name: string; models: string[]; sourceId: string; sourceType: 'built-in' | 'custom' }>) => void;
+}
+
+export function PresetSelectionDialog({
+  open,
+  onOpenChange,
+  customPresets,
+  quickPresets,
+  onAdd
+}: PresetSelectionDialogProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+  // Get all available presets (built-in + custom)
+  const builtInPresets = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
+    id: key,
+    name: preset.name,
+    models: preset.models,
+    type: 'built-in' as const
+  }));
+
+  const customPresetsWithType = customPresets.map(preset => ({
+    id: preset.id,
+    name: preset.name,
+    models: preset.models,
+    type: 'custom' as const
+  }));
+
+  const allPresets = [...builtInPresets, ...customPresetsWithType];
+
+  // Filter out presets already in Quick Presets
+  const availablePresets = allPresets.filter(preset => {
+    const alreadyInQuick = quickPresets.some(qp => 
+      qp.sourceId === preset.id && qp.sourceType === preset.type
+    );
+    return !alreadyInQuick;
+  });
+
+  // Filter by search query
+  const filteredPresets = availablePresets.filter(preset => {
+    const query = searchQuery.toLowerCase();
+    return (
+      preset.name.toLowerCase().includes(query) ||
+      preset.models.some(m => m.toLowerCase().includes(query))
+    );
+  });
+
+  const toggleSelection = (id: string) => {
+    const newSelected = new Set(selectedIds);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedIds(newSelected);
+  };
+
+  const handleAdd = () => {
+    const presetsToAdd = allPresets
+      .filter(p => selectedIds.has(p.id))
+      .map(p => ({
+        name: p.name,
+        models: p.models,
+        sourceId: p.id,
+        sourceType: p.type
+      }));
+
+    onAdd(presetsToAdd);
+    setSelectedIds(new Set());
+    setSearchQuery('');
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Add Presets to Quick Presets</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 flex-1 min-h-0">
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search presets by name or model..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Presets List */}
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+            {filteredPresets.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                {availablePresets.length === 0 
+                  ? 'All presets are already in Quick Presets'
+                  : 'No presets found matching your search'}
+              </div>
+            ) : (
+              filteredPresets.map(preset => (
+                <button
+                  key={preset.id}
+                  onClick={() => toggleSelection(preset.id)}
+                  className={`w-full p-4 rounded-lg border transition-colors text-left ${
+                    selectedIds.has(preset.id)
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary/50'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium">{preset.name}</h3>
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          {preset.type === 'built-in' ? 'Built-in' : 'Custom'}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-1">
+                        {preset.models.map((model, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground"
+                          >
+                            {model}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    {selectedIds.has(preset.id) && (
+                      <Check className="h-5 w-5 text-primary shrink-0" />
+                    )}
+                  </div>
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-between pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              {selectedIds.size} preset{selectedIds.size !== 1 ? 's' : ''} selected
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSelectedIds(new Set());
+                  setSearchQuery('');
+                  onOpenChange(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleAdd}
+                disabled={selectedIds.size === 0}
+              >
+                Add to Quick Presets
+              </Button>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -2,20 +2,20 @@ import { Button } from '@/components/ui/button';
 import { MODEL_PRESETS } from '@/lib/ai-providers';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import { useState } from 'react';
-import { CustomPreset } from './PresetsManagementModal';
+import { QuickPreset } from '@/lib/quick-presets';
 
 interface PresetsPanelProps {
   onApplyPreset: (models: string[]) => void;
-  customPresets?: CustomPreset[];
+  quickPresets?: QuickPreset[];
   onOpenPresetsManagement?: () => void;
-  onEditPreset?: (preset: CustomPreset, index: number) => void;
+  onEditPreset?: (preset: QuickPreset, index: number) => void;
   onDeletePreset?: (index: number) => void;
   onRenamePreset?: (index: number, newName: string) => void;
 }
 
 export function PresetsPanel({ 
   onApplyPreset, 
-  customPresets = [],
+  quickPresets = [],
   onOpenPresetsManagement,
   onEditPreset,
   onDeletePreset,
@@ -23,24 +23,6 @@ export function PresetsPanel({
 }: PresetsPanelProps) {
   const [editingPresetIndex, setEditingPresetIndex] = useState<number | null>(null);
   const [editingName, setEditingName] = useState('');
-  // Built-in presets
-  const builtInPresets = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
-    id: key,
-    name: preset.name,
-    models: preset.models,
-    isBuiltIn: true
-  }));
-
-  // Custom presets
-  const customPresetsList = customPresets.map((preset, index) => ({
-    id: `custom-${index}`,
-    name: preset.name,
-    models: preset.models,
-    isBuiltIn: false
-  }));
-
-  // Merge all presets: built-in first, then custom
-  const allPresets = [...builtInPresets, ...customPresetsList];
 
   return (
     <div className="p-3 md:p-4 border-b border-border bg-muted/50">
@@ -60,10 +42,8 @@ export function PresetsPanel({
           )}
         </div>
         <div className="space-y-2">
-          {allPresets.map((preset, index) => {
-            const isCustom = !preset.isBuiltIn;
-            const customIndex = isCustom ? index - builtInPresets.length : -1;
-            const isEditing = editingPresetIndex === customIndex;
+          {quickPresets.map((preset, index) => {
+            const isEditing = editingPresetIndex === index;
             
             return (
               <div key={preset.id} className="flex items-center gap-2">
@@ -80,14 +60,14 @@ export function PresetsPanel({
                       onChange={(e) => setEditingName(e.target.value)}
                       onBlur={() => {
                         if (editingName.trim() && onRenamePreset) {
-                          onRenamePreset(customIndex, editingName.trim());
+                          onRenamePreset(index, editingName.trim());
                         }
                         setEditingPresetIndex(null);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           if (editingName.trim() && onRenamePreset) {
-                            onRenamePreset(customIndex, editingName.trim());
+                            onRenamePreset(index, editingName.trim());
                           }
                           setEditingPresetIndex(null);
                         } else if (e.key === 'Escape') {
@@ -101,13 +81,13 @@ export function PresetsPanel({
                   ) : (
                     <span
                       onClick={(e) => {
-                        if (isCustom && onRenamePreset) {
+                        if (onRenamePreset) {
                           e.stopPropagation();
-                          setEditingPresetIndex(customIndex);
+                          setEditingPresetIndex(index);
                           setEditingName(preset.name);
                         }
                       }}
-                      className={isCustom ? 'cursor-pointer hover:text-primary' : ''}
+                      className="cursor-pointer hover:text-primary"
                     >
                       {preset.name}
                     </span>
@@ -117,14 +97,14 @@ export function PresetsPanel({
                   </span>
                 </Button>
                 
-                {isCustom && onEditPreset && onDeletePreset && (
+                {onEditPreset && onDeletePreset && (
                   <div className="flex gap-1">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEditPreset(customPresets[customIndex], customIndex);
+                        onEditPreset(preset, index);
                       }}
                       className="h-8 w-8 p-0"
                       title="Edit preset"
@@ -136,7 +116,7 @@ export function PresetsPanel({
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDeletePreset(customIndex);
+                        onDeletePreset(index);
                       }}
                       className="h-8 w-8 p-0 hover:text-destructive"
                       title="Delete preset"
