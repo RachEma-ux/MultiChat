@@ -453,7 +453,7 @@ export function FloatingChatWindow({
 
             {/* Presets Panel */}
             {showPresets && (
-              <PresetsPanel onApplyPreset={applyPreset} />
+              <PresetsPanel onApplyPreset={applyPreset} customPresets={customPresets} />
             )}
 
             <div className="flex-1 p-4 overflow-auto min-h-0">

@@ -1,16 +1,36 @@
 import { Button } from '@/components/ui/button';
 import { MODEL_PRESETS } from '@/lib/ai-providers';
 
-interface PresetsPanelProps {
-  onApplyPreset: (models: string[]) => void;
+interface CustomPreset {
+  name: string;
+  description?: string;
+  models: string[];
 }
 
-export function PresetsPanel({ onApplyPreset }: PresetsPanelProps) {
-  const presets = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
+interface PresetsPanelProps {
+  onApplyPreset: (models: string[]) => void;
+  customPresets?: CustomPreset[];
+}
+
+export function PresetsPanel({ onApplyPreset, customPresets = [] }: PresetsPanelProps) {
+  // Built-in presets
+  const builtInPresets = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
     id: key,
     name: preset.name,
-    models: preset.models
+    models: preset.models,
+    isBuiltIn: true
   }));
+
+  // Custom presets
+  const customPresetsList = customPresets.map((preset, index) => ({
+    id: `custom-${index}`,
+    name: preset.name,
+    models: preset.models,
+    isBuiltIn: false
+  }));
+
+  // Merge all presets: built-in first, then custom
+  const allPresets = [...builtInPresets, ...customPresetsList];
 
   return (
     <div className="p-3 md:p-4 border-b border-border bg-muted/50">
@@ -19,7 +39,7 @@ export function PresetsPanel({ onApplyPreset }: PresetsPanelProps) {
           <h3 className="text-sm font-medium">Quick Presets</h3>
         </div>
         <div className="space-y-2">
-          {presets.map((preset) => (
+          {allPresets.map((preset) => (
             <Button
               key={preset.id}
               variant="outline"
