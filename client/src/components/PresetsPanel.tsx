@@ -71,6 +71,7 @@ export function PresetsPanel({
             variant="ghost"
             size="sm"
             onClick={onNewPreset}
+            onTouchEnd={(e) => { e.preventDefault(); onNewPreset(); }}
             className="h-7 px-2 text-xs gap-1"
           >
             <Plus className="h-3 w-3" />
@@ -105,6 +106,11 @@ export function PresetsPanel({
                       e.stopPropagation();
                       handleStartRename(preset);
                     }}
+                    onTouchEnd={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      handleStartRename(preset);
+                    }}
                   >
                     {preset.name}
                   </span>
@@ -117,6 +123,7 @@ export function PresetsPanel({
                 variant="ghost"
                 size="sm"
                 onClick={() => onEditPreset(preset.id)}
+                onTouchEnd={(e) => { e.preventDefault(); onEditPreset(preset.id); }}
                 className="h-8 w-8 p-0"
                 title="Edit preset"
               >
@@ -126,6 +133,7 @@ export function PresetsPanel({
                 variant="ghost"
                 size="sm"
                 onClick={() => onDeletePreset(preset.id)}
+                onTouchEnd={(e) => { e.preventDefault(); onDeletePreset(preset.id); }}
                 className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                 title="Delete preset"
               >
