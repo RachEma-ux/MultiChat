@@ -399,7 +399,7 @@ export function FloatingChatWindow({
       bounds="parent"
     >
       <div
-        className="fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col"
+        className="fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col z-[900]"
         style={windowStyle}
       >
         {/* Header */}
