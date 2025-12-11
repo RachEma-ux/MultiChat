@@ -91,20 +91,10 @@ export function PresetsPanel({
                   variant="outline"
                   size="sm"
                   onClick={() => onApplyPreset(preset.models)}
+                  onTouchEnd={(e) => { e.preventDefault(); onApplyPreset(preset.models); }}
                   className="flex-1 justify-between text-xs h-8"
                 >
-                  <span
-                    className="flex-1 text-left truncate"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStartRename(preset);
-                    }}
-                    onTouchEnd={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                      handleStartRename(preset);
-                    }}
-                  >
+                  <span className="flex-1 text-left truncate">
                     {preset.name}
                   </span>
                   <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
@@ -115,10 +105,10 @@ export function PresetsPanel({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => onEditPreset(preset.id)}
-                onTouchEnd={(e) => { e.preventDefault(); onEditPreset(preset.id); }}
+                onClick={() => handleStartRename(preset)}
+                onTouchEnd={(e) => { e.preventDefault(); handleStartRename(preset); }}
                 className="h-8 w-8 p-0"
-                title="Edit preset"
+                title="Rename preset"
               >
                 <Pencil className="h-3 w-3" />
               </Button>
