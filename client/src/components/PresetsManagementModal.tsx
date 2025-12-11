@@ -74,13 +74,19 @@ export function PresetsManagementModal({
   };
 
   const handleEditPreset = (preset: CustomPreset) => {
-    console.log('Editing preset:', preset);
     setEditingPreset(preset);
     setIsCreating(false);
     setPresetName(preset.name);
     setPresetDescription(preset.description);
     setPresetModels([...preset.models]); // Create a new array copy
-    console.log('Preset models loaded:', preset.models);
+    
+    // Scroll to top to show the edit form
+    setTimeout(() => {
+      const modalContent = document.querySelector('[class*="overflow-y-auto"]');
+      if (modalContent) {
+        modalContent.scrollTop = 0;
+      }
+    }, 100);
   };
 
   const handleSavePreset = () => {
