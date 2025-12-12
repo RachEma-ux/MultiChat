@@ -364,13 +364,6 @@ export function FloatingChatWindow({
     toast.success('Preset removed from Quick Presets');
   };
 
-  const handleRenameQuickPreset = (id: string, newName: string) => {
-    const updated = updateQuickPreset(quickPresets, id, { name: newName });
-    setQuickPresets(updated);
-    saveQuickPresets(updated);
-    toast.success('Preset renamed');
-  };
-
   // Calculate window dimensions
   const windowStyle: React.CSSProperties = {
     zIndex: 1000,
@@ -518,7 +511,6 @@ export function FloatingChatWindow({
                 onNewPreset={() => setShowPresetSelection(true)}
                 onEditPreset={handleEditQuickPreset}
                 onDeletePreset={handleDeleteQuickPreset}
-                onRenamePreset={handleRenameQuickPreset}
               />
             )}
 

@@ -1,6 +1,4 @@
-import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Pencil, Trash2, Plus } from 'lucide-react';
 import { QuickPreset } from '@/lib/quick-presets';
 
@@ -10,7 +8,6 @@ interface PresetsPanelProps {
   onNewPreset: () => void;
   onEditPreset: (id: string) => void;
   onDeletePreset: (id: string) => void;
-  onRenamePreset: (id: string, newName: string) => void;
 }
 
 export function PresetsPanel({
@@ -18,44 +15,8 @@ export function PresetsPanel({
   quickPresets,
   onNewPreset,
   onEditPreset,
-  onDeletePreset,
-  onRenamePreset
+  onDeletePreset
 }: PresetsPanelProps) {
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const renameInputRef = useRef<HTMLInputElement>(null);
-
-  const handleStartRename = (preset: QuickPreset) => {
-    setRenamingId(preset.id);
-    setRenameValue(preset.name);
-    // Focus will happen automatically when input renders
-    setTimeout(() => {
-      renameInputRef.current?.focus();
-    }, 50);
-  };
-
-  const handleRenameSubmit = () => {
-    if (renamingId && renameValue.trim()) {
-      onRenamePreset(renamingId, renameValue.trim());
-    }
-    setRenamingId(null);
-    setRenameValue('');
-  };
-
-  const handleRenameCancel = () => {
-    setRenamingId(null);
-    setRenameValue('');
-  };
-
-  const handleRenameKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleRenameSubmit();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      handleRenameCancel();
-    }
-  };
 
   return (
     <div className="p-3 md:p-4 border-b border-border bg-muted/50">
@@ -76,39 +37,27 @@ export function PresetsPanel({
         <div className="space-y-2">
           {quickPresets.map((preset) => (
             <div key={preset.id} className="flex items-center gap-1">
-              {renamingId === preset.id ? (
-                <Input
-                  ref={renameInputRef}
-                  value={renameValue}
-                  onChange={(e) => setRenameValue(e.target.value)}
-                  onBlur={handleRenameSubmit}
-                  onKeyDown={handleRenameKeyDown}
-                  className="h-8 text-xs flex-1"
-                  autoFocus
-                />
-              ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => onApplyPreset(preset.models)}
-                  onTouchEnd={(e) => { e.preventDefault(); onApplyPreset(preset.models); }}
-                  className="flex-1 justify-between text-xs h-8"
-                >
-                  <span className="flex-1 text-left truncate">
-                    {preset.name}
-                  </span>
-                  <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
-                    {preset.models.length}
-                  </span>
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onApplyPreset(preset.models)}
+                onTouchEnd={(e) => { e.preventDefault(); onApplyPreset(preset.models); }}
+                className="flex-1 justify-between text-xs h-8"
+              >
+                <span className="flex-1 text-left truncate">
+                  {preset.name}
+                </span>
+                <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
+                  {preset.models.length}
+                </span>
+              </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleStartRename(preset)}
-                onTouchEnd={(e) => { e.preventDefault(); handleStartRename(preset); }}
+                onClick={() => onEditPreset(preset.id)}
+                onTouchEnd={(e) => { e.preventDefault(); onEditPreset(preset.id); }}
                 className="h-8 w-8 p-0"
-                title="Rename preset"
+                title="Edit preset"
               >
                 <Pencil className="h-3 w-3" />
               </Button>
