@@ -99,6 +99,46 @@ function DialogContent({
   showCloseButton?: boolean;
 }) {
   const { isComposing } = useDialogComposition();
+  const contentRef = React.useRef<HTMLDivElement>(null);
+
+  // Force centering with !important to override Radix positioning
+  React.useEffect(() => {
+    const element = contentRef.current;
+    if (!element) return;
+
+    // Apply initial styles with !important
+    const applyStyles = () => {
+      // Use cssText to force !important inline styles
+      const existingStyles = element.getAttribute('style') || '';
+      const baseStyles = existingStyles.split(';').filter(s => !s.includes('top') && !s.includes('left') && !s.includes('transform')).join(';');
+      element.setAttribute('style', `${baseStyles}; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%) !important;`);
+    };
+
+    applyStyles();
+
+    // Use MutationObserver to re-apply styles if Radix overrides them
+    const observer = new MutationObserver(() => {
+      applyStyles();
+    });
+
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['style']
+    });
+
+    // Also use requestAnimationFrame to continuously enforce positioning
+    let rafId: number;
+    const enforcePosition = () => {
+      applyStyles();
+      rafId = requestAnimationFrame(enforcePosition);
+    };
+    rafId = requestAnimationFrame(enforcePosition);
+
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
 
   const handleEscapeKeyDown = React.useCallback(
     (e: KeyboardEvent) => {
@@ -119,14 +159,20 @@ function DialogContent({
   );
 
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal data-slot="dialog-portal" container={document.body}>
       <DialogOverlay />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-[1001] grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed z-[1001] grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
           className
         )}
+        style={{
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)'
+        }}
         onEscapeKeyDown={handleEscapeKeyDown}
         {...props}
       >

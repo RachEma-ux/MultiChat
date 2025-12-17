@@ -1,8 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Search, Check } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Check } from 'lucide-react';
 import { MODEL_PRESETS } from '@/lib/ai-providers';
 import { CustomPreset } from './PresetsManagementModal';
 import { QuickPreset } from '@/lib/quick-presets';
@@ -22,9 +22,8 @@ export function PresetSelectionDialog({
   quickPresets,
   onAdd
 }: PresetSelectionDialogProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [selectedPresetId, setSelectedPresetId] = useState<string>('');
 
   // Get all available presets (built-in + custom)
   const builtInPresets = Object.entries(MODEL_PRESETS).map(([key, preset]) => ({
@@ -51,24 +50,17 @@ export function PresetSelectionDialog({
     return !alreadyInQuick;
   });
 
-  // Filter by search query
-  const filteredPresets = availablePresets.filter(preset => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      preset.name.toLowerCase().includes(query) ||
-      preset.models.some(m => m.toLowerCase().includes(query))
-    );
-  });
-
-  const toggleSelection = (id: string) => {
+  const handleSelectPreset = (presetId: string) => {
+    setSelectedPresetId(presetId);
     const newSelected = new Set(selectedIds);
-    if (newSelected.has(id)) {
-      newSelected.delete(id);
+    if (newSelected.has(presetId)) {
+      newSelected.delete(presetId);
     } else {
-      newSelected.add(id);
+      newSelected.add(presetId);
     }
     setSelectedIds(newSelected);
+    // Reset dropdown after selection
+    setTimeout(() => setSelectedPresetId(''), 100);
   };
 
   const handleAdd = () => {
@@ -83,7 +75,7 @@ export function PresetSelectionDialog({
 
     onAdd(presetsToAdd);
     setSelectedIds(new Set());
-    setSearchQuery('');
+    setSelectedPresetId('');
     onOpenChange(false);
   };
 
@@ -91,69 +83,85 @@ export function PresetSelectionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle>Add Presets to Quick Presets</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 flex-1 min-h-0">
-          {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              ref={searchInputRef}
-              placeholder="Search presets by name or model..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-              autoFocus={false}
-            />
-          </div>
-
-          {/* Presets List */}
-          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-            {filteredPresets.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                {availablePresets.length === 0 
-                  ? 'All presets are already in Quick Presets'
-                  : 'No presets found matching your search'}
+        <div className="flex flex-col gap-4 min-h-[400px]">
+          {/* Dropdown Selector */}
+          <div>
+            {availablePresets.length === 0 ? (
+              <div className="text-center text-muted-foreground py-8 border border-dashed rounded-lg">
+                All presets are already in Quick Presets
               </div>
             ) : (
-              filteredPresets.map(preset => (
-                <button
-                  key={preset.id}
-                  onClick={() => toggleSelection(preset.id)}
-                  className={`w-full p-4 rounded-lg border transition-colors text-left ${
-                    selectedIds.has(preset.id)
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex-1 min-w-0">
+              <Select value={selectedPresetId} onValueChange={handleSelectPreset}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a preset to add..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {availablePresets.map(preset => (
+                    <SelectItem key={preset.id} value={preset.id}>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-medium">{preset.name}</h3>
-                        <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                          {preset.type === 'built-in' ? 'Built-in' : 'Custom'}
-                        </span>
+                        <span>{preset.name}</span>
+                        <span className="text-xs text-muted-foreground">({preset.models.length} models)</span>
                       </div>
-                      <div className="mt-2 flex flex-wrap gap-1">
-                        {preset.models.map((model, idx) => (
-                          <span
-                            key={idx}
-                            className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground"
-                          >
-                            {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+
+          {/* Selected Presets List */}
+          <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+            {selectedIds.size === 0 ? (
+              <div className="text-center text-muted-foreground py-8">
+                Select presets from the dropdown above
+              </div>
+            ) : (
+              Array.from(selectedIds).map(id => {
+                const preset = allPresets.find(p => p.id === id);
+                if (!preset) return null;
+                return (
+                  <div
+                    key={preset.id}
+                    className="w-full p-4 rounded-lg border border-primary bg-primary/5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-medium">{preset.name}</h3>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {preset.type === 'built-in' ? 'Built-in' : 'Custom'}
                           </span>
-                        ))}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {preset.models.map((model, idx) => (
+                            <span
+                              key={idx}
+                              className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground"
+                            >
+                              {model}
+                            </span>
+                          ))}
+                        </div>
                       </div>
+                      <button
+                        onClick={() => {
+                          const newSelected = new Set(selectedIds);
+                          newSelected.delete(id);
+                          setSelectedIds(newSelected);
+                        }}
+                        className="shrink-0 text-muted-foreground hover:text-foreground"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    {selectedIds.has(preset.id) && (
-                      <Check className="h-5 w-5 text-primary shrink-0" />
-                    )}
                   </div>
-                </button>
-              ))
+                );
+              })
             )}
           </div>
 
@@ -163,7 +171,7 @@ export function PresetSelectionDialog({
               variant="outline"
               onClick={() => {
                 setSelectedIds(new Set());
-                setSearchQuery('');
+                setSelectedPresetId('');
                 onOpenChange(false);
               }}
             >
