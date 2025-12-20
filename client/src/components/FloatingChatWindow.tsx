@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
-import { Pin, Minus, Maximize2, Minimize2, X } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -396,49 +396,52 @@ export function FloatingChatWindow({
         style={windowStyle}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0">
-          <div className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0">
+        <div 
+          className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0"
+          onDoubleClick={(e) => {
+            // Only maximize if not clicking on the title input
+            if ((e.target as HTMLElement).tagName !== 'INPUT') {
+              toggleMaximize();
+            }
+          }}
+        >
+          <div className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0 mr-4">
+            <MessageSquare className="h-4 w-4 text-primary shrink-0" />
             {isEditingTitle ? (
-              <div className="flex items-center gap-2 flex-1">
-                <input
-                  type="text"
-                  value={editTitleValue}
-                  onChange={(e) => setEditTitleValue(e.target.value)}
-                  className="flex-1 px-2 py-1 text-sm border border-border rounded bg-background"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      setConversationTitle(editTitleValue);
-                      setIsEditingTitle(false);
-                      toast.success('Title updated');
-                    } else if (e.key === 'Escape') {
-                      setIsEditingTitle(false);
-                    }
-                  }}
-                />
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setConversationTitle(editTitleValue);
+              <input
+                autoFocus
+                type="text"
+                value={editTitleValue}
+                onChange={(e) => setEditTitleValue(e.target.value)}
+                onBlur={() => {
+                  handleRename(editTitleValue);
+                  setIsEditingTitle(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleRename(editTitleValue);
                     setIsEditingTitle(false);
-                    toast.success('Title updated');
-                  }}
-                  className="h-6 px-2 text-xs"
-                >
-                  Save
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditingTitle(false)}
-                  className="h-6 px-2 text-xs"
-                >
-                  Cancel
-                </Button>
-              </div>
+                  } else if (e.key === 'Escape') {
+                    setIsEditingTitle(false);
+                    setEditTitleValue(conversationTitle);
+                  }
+                }}
+                className="bg-background border border-primary/50 rounded px-1.5 py-0.5 text-sm w-full outline-none h-6"
+                onClick={(e) => e.stopPropagation()}
+                onDoubleClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
             ) : (
-              <span className="text-sm font-medium truncate">{conversationTitle}</span>
+              <span 
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  renameChat();
+                }}
+                className="font-medium text-sm truncate cursor-text hover:text-primary transition-colors"
+                title="Double click to rename"
+              >
+                {conversationTitle}
+              </span>
             )}
           </div>
           

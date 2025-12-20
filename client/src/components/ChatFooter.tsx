@@ -41,9 +41,9 @@ interface ChatFooterProps {
   messagesCount?: number;
   attachments?: Attachment[];
   onRemoveAttachment?: (index: number) => void;
-  savedConversations?: SavedConversation[];
-  onLoadConversation?: (convo: SavedConversation) => void;
-  onViewAllSaved?: () => void;
+  savedConversations: SavedConversation[];
+  onLoadConversation: (convo: SavedConversation) => void;
+  onViewAllSaved: () => void;
   archivedCount?: number;
 }
 
@@ -228,6 +228,16 @@ export function ChatFooter({
                   >
                     <BarChart className="h-4 w-4" />
                     <span className="text-sm">Show Analytics</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onRenameChat?.();
+                      setShowFooterMenu(false);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="text-sm">Rename Chat</span>
                   </button>
                   <button
                     onClick={() => {
