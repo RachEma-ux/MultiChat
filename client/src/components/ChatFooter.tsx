@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, Edit, Trash2, BarChart, MessageSquare, Archive, Download, X, Image as ImageIcon, Zap, Mic, Plug } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
+import { ConnectorsStore } from './ConnectorsStore';
 
 interface Attachment {
   name: string;
@@ -76,8 +77,14 @@ export function ChatFooter({
   const [showFooterMenu, setShowFooterMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [showPlugins, setShowPlugins] = useState(false);
+  const [showConnectorsStore, setShowConnectorsStore] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const inputMessageRef = useRef(inputMessage);
+
+  // Keep inputMessageRef updated
+  useEffect(() => {
+    inputMessageRef.current = inputMessage;
+  }, [inputMessage]);
 
   // Auto-grow textarea
   const handleTextareaChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -446,6 +453,7 @@ export function ChatFooter({
                     
                     recognition.continuous = false;
                     recognition.interimResults = false;
+                    recognition.lang = navigator.language || 'en-US';
                     
                     recognition.onstart = () => {
                       setIsListening(true);
@@ -454,21 +462,33 @@ export function ChatFooter({
                     
                     recognition.onresult = (event: any) => {
                       const transcript = event.results[0][0].transcript;
-                      onInputChange?.(inputMessage + (inputMessage ? ' ' : '') + transcript);
+                      const currentInput = inputMessageRef.current;
+                      onInputChange?.(currentInput + (currentInput ? ' ' : '') + transcript);
                       setIsListening(false);
                     };
                     
                     recognition.onerror = (event: any) => {
                       console.error('Speech recognition error', event.error);
                       setIsListening(false);
-                      toast.error('Voice input failed');
+                      if (event.error === 'not-allowed') {
+                        toast.error('Microphone access denied');
+                      } else if (event.error === 'no-speech') {
+                        toast.info('No speech detected');
+                      } else {
+                        toast.error(`Voice input failed: ${event.error}`);
+                      }
                     };
                     
                     recognition.onend = () => {
                       setIsListening(false);
                     };
                     
-                    recognition.start();
+                    try {
+                      recognition.start();
+                    } catch (e) {
+                      console.error(e);
+                      toast.error('Failed to start voice input');
+                    }
                   } else {
                     toast.error('Speech recognition not supported in this browser');
                   }
@@ -479,43 +499,20 @@ export function ChatFooter({
               <Mic className="h-4 w-4" />
             </Button>
             
-            <div className="relative inline-block">
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-7 w-7 ${showPlugins ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-                onClick={() => setShowPlugins(!showPlugins)}
-                title="Plugins"
-              >
-                <Plug className="h-4 w-4" />
-              </Button>
-              
-              {showPlugins && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-[9998]"
-                    onClick={() => setShowPlugins(false)}
-                  />
-                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-card rounded-lg shadow-xl z-[9999] border border-border overflow-hidden">
-                    <div className="px-3 py-2 border-b border-border bg-muted/50">
-                      <h4 className="text-xs font-semibold">Plugins</h4>
-                    </div>
-                    <div className="p-2 text-xs text-muted-foreground text-center">
-                      No plugins installed
-                    </div>
-                    <button
-                      className="w-full text-left px-3 py-2 text-xs hover:bg-accent text-primary flex items-center gap-2"
-                      onClick={() => {
-                        toast.info('Plugin store coming soon');
-                        setShowPlugins(false);
-                      }}
-                    >
-                      <Plus className="h-3 w-3" /> Add Plugin
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`h-7 w-7 ${showConnectorsStore ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              onClick={() => setShowConnectorsStore(true)}
+              title="Connectors Store"
+            >
+              <Plug className="h-4 w-4" />
+            </Button>
+
+            <ConnectorsStore 
+              isOpen={showConnectorsStore} 
+              onClose={() => setShowConnectorsStore(false)} 
+            />
           </div>
         </div>
         <Button
