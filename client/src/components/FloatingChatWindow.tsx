@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Draggable from 'react-draggable';
 import { Button } from '@/components/ui/button';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -409,7 +409,13 @@ export function FloatingChatWindow({
           }}
         >
           <div className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0 mr-4">
+            {/* Drag Handle - Explicit drag zone */}
+            <div className="flex items-center justify-center text-muted-foreground/50 hover:text-foreground transition-colors">
+              <GripHorizontal className="h-4 w-4" />
+            </div>
+            
             <MessageSquare className="h-4 w-4 text-primary shrink-0" />
+            
             {isEditingTitle ? (
               <input
                 autoFocus
@@ -433,6 +439,7 @@ export function FloatingChatWindow({
                 onClick={(e) => e.stopPropagation()}
                 onDoubleClick={(e) => e.stopPropagation()}
                 onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
               />
             ) : (
               <span 
@@ -454,7 +461,9 @@ export function FloatingChatWindow({
                   e.preventDefault();
                   renameChat();
                 }}
-                className="font-medium text-sm truncate cursor-text hover:text-primary transition-colors select-none"
+                // Added no-drag class to prevent dragging from the title text
+                // This ensures double-tap works reliably without initiating drag
+                className="font-medium text-sm truncate cursor-text hover:text-primary transition-colors select-none no-drag"
                 title="Double click to rename"
               >
                 {conversationTitle}
