@@ -1,15 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
 import { FloatingChatWindow } from '@/components/FloatingChatWindow';
-import { Menu, Download, X } from 'lucide-react';
+import { WindowDock } from '@/components/WindowDock';
+import { WindowLayoutPresets, WindowLayout } from '@/components/WindowLayoutPresets';
+import { Menu, Download, X, Layout, Plus } from 'lucide-react';
 import { useLocation } from 'wouter';
 import { toast } from 'sonner';
+import { AnimatePresence } from 'framer-motion';
 
 interface ChatWindow {
   id: string;
   position: { x: number; y: number };
+  size: { width: number; height: number };
+  isPinned: boolean;
+  isMinimized: boolean;
+  title: string;
+  messageCount: number;
 }
+
+const DEFAULT_WINDOW_SIZE = { width: 400, height: 500 };
+const MAX_WINDOWS = 10;
 
 export default function EmptyPage() {
   const [, setLocation] = useLocation();
@@ -17,8 +28,20 @@ export default function EmptyPage() {
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
+  const [showLayoutPresets, setShowLayoutPresets] = useState(false);
 
-  // Start with no windows - user must click Mode -> Chat to open windows
+  // Load windows from localStorage on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('floatingChatWindows');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setChatWindows(parsed);
+      } catch (e) {
+        console.error('Error loading chat windows:', e);
+      }
+    }
+  }, []);
 
   // Save windows to localStorage whenever they change
   useEffect(() => {
@@ -37,37 +60,113 @@ export default function EmptyPage() {
     });
   };
 
-  const addNewChatWindow = () => {
-    if (chatWindows.length >= 3) {
-      toast.error('Maximum 3 chat windows allowed');
+  const addNewChatWindow = useCallback(() => {
+    const activeWindows = chatWindows.filter(w => !w.isMinimized);
+    if (chatWindows.length >= MAX_WINDOWS) {
+      toast.error(`Maximum ${MAX_WINDOWS} chat windows allowed`);
       return;
     }
 
+    const offset = activeWindows.length * 30;
     const newWindow: ChatWindow = {
       id: `${Date.now()}`,
       position: {
-        x: 100 + (chatWindows.length * 30),
-        y: 100 + (chatWindows.length * 30)
-      }
+        x: 100 + offset,
+        y: 100 + offset
+      },
+      size: { ...DEFAULT_WINDOW_SIZE },
+      isPinned: false,
+      isMinimized: false,
+      title: `Chat ${Date.now()}`,
+      messageCount: 0,
     };
 
-    setChatWindows([...chatWindows, newWindow]);
+    setChatWindows(prev => [...prev, newWindow]);
     toast.success('New chat window opened');
-  };
+  }, [chatWindows]);
 
-  const closeChatWindow = (id: string) => {
-    setChatWindows(chatWindows.filter(w => w.id !== id));
+  const closeChatWindow = useCallback((id: string) => {
+    setChatWindows(prev => prev.filter(w => w.id !== id));
     toast.info('Chat window closed');
-  };
+  }, []);
 
-  const updateWindowPosition = (id: string, position: { x: number; y: number }) => {
-    setChatWindows(chatWindows.map(w =>
+  const minimizeWindow = useCallback((id: string) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isMinimized: true } : w
+    ));
+  }, []);
+
+  const restoreWindow = useCallback((id: string) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isMinimized: false } : w
+    ));
+  }, []);
+
+  const updateWindowPosition = useCallback((id: string, position: { x: number; y: number }) => {
+    setChatWindows(prev => prev.map(w =>
       w.id === id ? { ...w, position } : w
     ));
-  };
+  }, []);
 
-  // Determine what to show in Mode selector
-  const chatModeLabel = chatWindows.length > 0 ? 'Add New Chat Window' : 'Chat';
+  const updateWindowSize = useCallback((id: string, size: { width: number; height: number }) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, size } : w
+    ));
+  }, []);
+
+  const updateWindowTitle = useCallback((id: string, title: string) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, title } : w
+    ));
+  }, []);
+
+  const updateWindowMessageCount = useCallback((id: string, count: number) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, messageCount: count } : w
+    ));
+  }, []);
+
+  const updateWindowPinned = useCallback((id: string, isPinned: boolean) => {
+    setChatWindows(prev => prev.map(w =>
+      w.id === id ? { ...w, isPinned } : w
+    ));
+  }, []);
+
+  // Get current window layouts for preset saving
+  const getCurrentWindowLayouts = useCallback((): WindowLayout[] => {
+    return chatWindows.filter(w => !w.isMinimized).map(w => ({
+      id: w.id,
+      x: w.position.x,
+      y: w.position.y,
+      width: w.size.width,
+      height: w.size.height,
+      isPinned: w.isPinned,
+    }));
+  }, [chatWindows]);
+
+  // Apply a window layout preset
+  const applyLayoutPreset = useCallback((layouts: WindowLayout[]) => {
+    // Close all current windows
+    setChatWindows([]);
+    
+    // Create new windows based on the preset
+    setTimeout(() => {
+      const newWindows: ChatWindow[] = layouts.map((layout, index) => ({
+        id: `${Date.now()}-${index}`,
+        position: { x: layout.x, y: layout.y },
+        size: { width: layout.width, height: layout.height },
+        isPinned: layout.isPinned,
+        isMinimized: false,
+        title: `Chat ${index + 1}`,
+        messageCount: 0,
+      }));
+      setChatWindows(newWindows);
+    }, 100);
+  }, []);
+
+  const activeWindows = chatWindows.filter(w => !w.isMinimized);
+  const minimizedWindows = chatWindows.filter(w => w.isMinimized);
+  const chatModeLabel = chatWindows.length > 0 ? `Add Chat (${chatWindows.length}/${MAX_WINDOWS})` : 'Chat';
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
@@ -85,6 +184,30 @@ export default function EmptyPage() {
         </div>
         
         <div className="flex items-center gap-1 md:gap-2">
+          {/* Window Layout Presets Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setShowLayoutPresets(true)}
+            title="Window Layouts"
+            className="hidden sm:inline-flex"
+          >
+            <Layout className="h-5 w-5" />
+          </Button>
+
+          {/* Quick Add Window Button */}
+          {chatWindows.length < MAX_WINDOWS && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={addNewChatWindow}
+              title="Add new chat window"
+              className="hidden sm:inline-flex"
+            >
+              <Plus className="h-5 w-5" />
+            </Button>
+          )}
+
           {/* Mode Selector */}
           <div className="relative">
             <Button
@@ -105,7 +228,6 @@ export default function EmptyPage() {
                   <button
                     onClick={() => {
                       setShowModeMenu(false);
-                      // Agents mode - not implemented yet
                       toast.info('Agents mode coming soon');
                     }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
@@ -118,7 +240,7 @@ export default function EmptyPage() {
                       addNewChatWindow();
                     }}
                     className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                    disabled={chatWindows.length >= 3}
+                    disabled={chatWindows.length >= MAX_WINDOWS}
                   >
                     {chatModeLabel}
                   </button>
@@ -156,7 +278,6 @@ export default function EmptyPage() {
           >
             <Download className="h-5 w-5" />
           </Button>
-
         </div>
       </div>
 
@@ -221,6 +342,35 @@ export default function EmptyPage() {
                 isExpanded={expandedMenuGroups.has('search')}
                 onToggle={() => toggleMenuGroup('search')}
               />
+              
+              {/* Window Management Section */}
+              <div className="px-4 py-3 border-t border-border">
+                <h3 className="text-xs font-semibold text-muted-foreground mb-2">WINDOWS</h3>
+                <div className="space-y-1">
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      setShowLayoutPresets(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-2 py-2 hover:bg-accent rounded-md transition-colors text-left"
+                  >
+                    <Layout className="h-4 w-4" />
+                    <span className="text-sm">Window Layouts</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMenu(false);
+                      addNewChatWindow();
+                    }}
+                    disabled={chatWindows.length >= MAX_WINDOWS}
+                    className="w-full flex items-center gap-3 px-2 py-2 hover:bg-accent rounded-md transition-colors text-left disabled:opacity-50"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span className="text-sm">New Chat Window</span>
+                  </button>
+                </div>
+              </div>
+
               <button
                 onClick={() => {
                   if (window.confirm('Are you sure you want to quit? All data will be cleared.')) {
@@ -240,18 +390,48 @@ export default function EmptyPage() {
       )}
 
       {/* Empty Main Content - Background for floating windows */}
-      <div className="flex-1 bg-background relative">
+      <div className="flex-1 bg-background relative overflow-hidden">
         {/* Floating Chat Windows */}
-        {chatWindows.map((window) => (
-          <FloatingChatWindow
-            key={window.id}
-            id={window.id}
-            initialPosition={window.position}
-            onClose={() => closeChatWindow(window.id)}
-            onPositionChange={(pos) => updateWindowPosition(window.id, pos)}
-          />
-        ))}
+        <AnimatePresence>
+          {activeWindows.map((window) => (
+            <FloatingChatWindow
+              key={window.id}
+              id={window.id}
+              initialPosition={window.position}
+              onClose={() => closeChatWindow(window.id)}
+              onMinimize={() => minimizeWindow(window.id)}
+              onPositionChange={(pos) => updateWindowPosition(window.id, pos)}
+              onSizeChange={(size) => updateWindowSize(window.id, size)}
+              onTitleChange={(title) => updateWindowTitle(window.id, title)}
+              onMessageCountChange={(count) => updateWindowMessageCount(window.id, count)}
+              onPinnedChange={(pinned) => updateWindowPinned(window.id, pinned)}
+            />
+          ))}
+        </AnimatePresence>
+
+        {/* Minimized Windows Dock */}
+        <AnimatePresence>
+          {minimizedWindows.length > 0 && (
+            <WindowDock
+              minimizedWindows={minimizedWindows.map(w => ({
+                id: w.id,
+                title: w.title,
+                messageCount: w.messageCount,
+              }))}
+              onRestore={restoreWindow}
+              onClose={closeChatWindow}
+            />
+          )}
+        </AnimatePresence>
       </div>
+
+      {/* Window Layout Presets Modal */}
+      <WindowLayoutPresets
+        isOpen={showLayoutPresets}
+        onClose={() => setShowLayoutPresets(false)}
+        currentWindows={getCurrentWindowLayouts()}
+        onApplyPreset={applyLayoutPreset}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, useDragControls, PanInfo } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, Plus, Pencil, Trash2 } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -32,14 +32,24 @@ interface FloatingChatWindowProps {
   id: string;
   initialPosition?: { x: number; y: number };
   onClose: () => void;
+  onMinimize?: () => void;
   onPositionChange?: (pos: { x: number; y: number }) => void;
+  onSizeChange?: (size: { width: number; height: number }) => void;
+  onTitleChange?: (title: string) => void;
+  onMessageCountChange?: (count: number) => void;
+  onPinnedChange?: (pinned: boolean) => void;
 }
 
 export function FloatingChatWindow({ 
   id, 
   initialPosition = { x: 50, y: 50 },
   onClose,
-  onPositionChange 
+  onMinimize,
+  onPositionChange,
+  onSizeChange,
+  onTitleChange,
+  onMessageCountChange,
+  onPinnedChange,
 }: FloatingChatWindowProps) {
   const [position, setPosition] = useState(initialPosition);
   const [isPinned, setIsPinned] = useState(false);
@@ -243,13 +253,34 @@ export function FloatingChatWindow({
     onPositionChange?.(newPos);
   };
 
+  // Notify parent of title changes
+  useEffect(() => {
+    onTitleChange?.(conversationTitle);
+  }, [conversationTitle, onTitleChange]);
+
+  // Notify parent of message count changes
+  useEffect(() => {
+    onMessageCountChange?.(messages.length);
+  }, [messages.length, onMessageCountChange]);
+
+  // Notify parent of size changes
+  useEffect(() => {
+    onSizeChange?.(windowSize);
+  }, [windowSize, onSizeChange]);
+
   const togglePin = () => {
     setIsPinned(!isPinned);
+    onPinnedChange?.(!isPinned);
     toast.info(isPinned ? 'Window unpinned' : 'Window pinned');
   };
 
   const toggleMinimize = () => {
-    setIsMinimized(!isMinimized);
+    if (!isMinimized && onMinimize) {
+      // Call parent's minimize handler instead of local state
+      onMinimize();
+    } else {
+      setIsMinimized(!isMinimized);
+    }
   };
 
   const toggleMaximize = () => {
@@ -768,6 +799,79 @@ export function FloatingChatWindow({
             />
           )}
 
+          {/* Presets Panel (standalone when Models not shown) */}
+          {showPresets && !showModelSelector && (
+            <div className="p-3 md:p-4 border-b border-border bg-muted/50">
+              <div className="mb-3 p-3 bg-background rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium">Quick Presets</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setEditingPreset(null);
+                      setShowPresetEditor(true);
+                    }}
+                    className="h-7 px-2 text-xs gap-1"
+                  >
+                    <Plus className="h-3 w-3" />
+                    New
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  {customPresets.map((preset) => (
+                    <div key={preset.id} className="flex items-center gap-1">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyPreset(preset.models)}
+                        className="flex-1 justify-between text-xs h-8"
+                      >
+                        <span className="flex-1 text-left truncate">
+                          {preset.name}
+                        </span>
+                        <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
+                          {preset.models.length}
+                        </span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setEditingPreset(preset);
+                          setShowPresetEditor(true);
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="Edit preset"
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const updated = customPresets.filter(p => p.id !== preset.id);
+                          setCustomPresets(updated);
+                          localStorage.setItem('customPresets', JSON.stringify(updated));
+                          toast.success('Preset deleted');
+                        }}
+                        className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                        title="Delete preset"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                  {customPresets.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">
+                      No presets yet. Create one to quickly select multiple models.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Messages Area */}
           <div className="flex-1 overflow-y-auto p-3 space-y-3">
             {messages.length === 0 ? (
@@ -824,8 +928,8 @@ export function FloatingChatWindow({
             onSettingsClick={() => setShowSettings(!showSettings)}
             onSummarizerClick={handleSummarizer}
             onPresetsClick={() => {
-              setShowPresets(true);
-              setShowModelSelector(true);
+              setShowPresets(!showPresets);
+              setShowModelSelector(false);
             }}
             onNewChat={clearChat}
             onSave={saveConversation}

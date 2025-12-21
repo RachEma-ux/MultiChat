@@ -74,3 +74,9 @@
 - [x] Implement Snap-to-Edge for chat window
 - [x] Implement Resize Handle for chat window
 - [x] Implement Window Memory (save position/size to localStorage)
+
+## Presets & Multi-Window Features
+- [x] Restore original Presets button behavior (rollback recent changes)
+- [x] Implement Multiple Windows feature (independent chat windows)
+- [x] Implement Window Presets (save/restore window layouts)
+- [x] Implement Minimize to Tray (dock at bottom for minimized windows)
