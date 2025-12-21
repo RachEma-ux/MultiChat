@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, Plus, Pencil, Trash2 } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, GripVertical, Plus, Pencil, Trash2, Check } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -23,7 +23,7 @@ import { SavedConversationsModal } from './SavedConversationsModal';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 import { useKeyboardShortcuts, SHORTCUT_KEYS } from '@/hooks/useKeyboardShortcuts';
 import { AI_PROVIDERS, MODEL_PRESETS } from '@/lib/ai-providers';
-import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset } from '@/lib/quick-presets';
+import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset, reorderQuickPresets } from '@/lib/quick-presets';
 import { toast } from 'sonner';
 
 interface Attachment {
@@ -89,6 +89,8 @@ export function FloatingChatWindow({
   const [quickPresets, setQuickPresets] = useState<QuickPreset[]>([]);
   const [showPresetSelection, setShowPresetSelection] = useState(false);
   const [editingQuickPresetId, setEditingQuickPresetId] = useState<string | null>(null);
+  const [editingQuickPresetName, setEditingQuickPresetName] = useState('');
+  const [draggedPresetIndex, setDraggedPresetIndex] = useState<number | null>(null);
   const [showSavedConversationsModal, setShowSavedConversationsModal] = useState(false);
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 400, height: 500 });
@@ -896,23 +898,113 @@ export function FloatingChatWindow({
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-                <div className="space-y-2">
-                  {/* Quick Presets from quickPresets state */}
-                  {quickPresets.map((preset) => (
-                    <div key={preset.id} className="flex items-center gap-1">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => applyPreset({ name: preset.name, models: preset.models })}
-                        className="flex-1 justify-between text-xs h-8"
-                      >
-                        <span className="flex-1 text-left truncate">
-                          {preset.name}
-                        </span>
-                        <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
-                          {preset.models.length}
-                        </span>
-                      </Button>
+                <div className="space-y-1">
+                  {/* Quick Presets from quickPresets state with drag-and-drop */}
+                  {quickPresets.map((preset, index) => (
+                    <div
+                      key={preset.id}
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggedPresetIndex(index);
+                        e.dataTransfer.effectAllowed = 'move';
+                      }}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        if (draggedPresetIndex !== null && draggedPresetIndex !== index) {
+                          const reordered = reorderQuickPresets(quickPresets, draggedPresetIndex, index);
+                          setQuickPresets(reordered);
+                          saveQuickPresets(reordered);
+                        }
+                        setDraggedPresetIndex(null);
+                      }}
+                      onDragEnd={() => setDraggedPresetIndex(null)}
+                      className={`flex items-center gap-1 ${draggedPresetIndex === index ? 'opacity-50' : ''}`}
+                    >
+                      {/* Drag handle */}
+                      <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
+                        <GripVertical className="h-3 w-3" />
+                      </div>
+                      
+                      {/* Editable preset name or button */}
+                      {editingQuickPresetId === preset.id ? (
+                        <div className="flex-1 flex items-center gap-1">
+                          <input
+                            type="text"
+                            value={editingQuickPresetName}
+                            onChange={(e) => setEditingQuickPresetName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const updated = updateQuickPreset(quickPresets, preset.id, { name: editingQuickPresetName });
+                                setQuickPresets(updated);
+                                saveQuickPresets(updated);
+                                setEditingQuickPresetId(null);
+                                toast.success('Preset renamed');
+                              } else if (e.key === 'Escape') {
+                                setEditingQuickPresetId(null);
+                              }
+                            }}
+                            autoFocus
+                            className="flex-1 h-7 px-2 text-xs bg-background border border-input rounded-md focus:outline-none focus:ring-1 focus:ring-primary"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const updated = updateQuickPreset(quickPresets, preset.id, { name: editingQuickPresetName });
+                              setQuickPresets(updated);
+                              saveQuickPresets(updated);
+                              setEditingQuickPresetId(null);
+                              toast.success('Preset renamed');
+                            }}
+                            className="h-7 w-7 p-0 text-primary"
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => applyPreset({ name: preset.name, models: preset.models })}
+                          onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            setEditingQuickPresetId(preset.id);
+                            setEditingQuickPresetName(preset.name);
+                          }}
+                          className="flex-1 justify-between text-xs h-8"
+                          title="Double-click to rename"
+                        >
+                          <span className="flex-1 text-left truncate">
+                            {preset.name}
+                            {preset.isModified && <span className="ml-1 text-muted-foreground">*</span>}
+                          </span>
+                          <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
+                            {preset.models.length}
+                          </span>
+                        </Button>
+                      )}
+                      
+                      {/* Edit button */}
+                      {editingQuickPresetId !== preset.id && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setEditingQuickPresetId(preset.id);
+                            setEditingQuickPresetName(preset.name);
+                          }}
+                          className="h-8 w-8 p-0"
+                          title="Edit preset name"
+                        >
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                      )}
+                      
+                      {/* Remove button */}
                       <Button
                         variant="ghost"
                         size="sm"

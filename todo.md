@@ -96,3 +96,15 @@
 - [x] Selecting a preset from dropdown adds it to Quick Presets list
 - [x] Only shows presets not already in Quick Presets list (already-added presets are disabled)
 - [x] Remove button (trash icon) allows removing presets from Quick Presets
+
+## Quick Presets Panel Enhancements
+- [x] Add edit functionality - Allow editing preset names directly in Quick Presets panel
+  - Pencil icon button to enter edit mode
+  - Double-click on preset name to edit
+  - Press Enter or click checkmark to save
+  - Press Escape to cancel
+  - Modified presets show asterisk (*) indicator
+- [x] Add drag-and-drop reordering - Let users arrange presets in preferred order
+  - Drag handle (grip icon) on left side of each preset
+  - Drag and drop to reorder presets
+  - Order persists to localStorage
