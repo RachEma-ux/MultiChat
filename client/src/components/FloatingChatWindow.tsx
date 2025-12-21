@@ -253,20 +253,26 @@ export function FloatingChatWindow({
     onPositionChange?.(newPos);
   };
 
-  // Notify parent of title changes
+  // Notify parent of title changes (use ref to avoid infinite loop)
+  const onTitleChangeRef = useRef(onTitleChange);
+  onTitleChangeRef.current = onTitleChange;
   useEffect(() => {
-    onTitleChange?.(conversationTitle);
-  }, [conversationTitle, onTitleChange]);
+    onTitleChangeRef.current?.(conversationTitle);
+  }, [conversationTitle]);
 
   // Notify parent of message count changes
+  const onMessageCountChangeRef = useRef(onMessageCountChange);
+  onMessageCountChangeRef.current = onMessageCountChange;
   useEffect(() => {
-    onMessageCountChange?.(messages.length);
-  }, [messages.length, onMessageCountChange]);
+    onMessageCountChangeRef.current?.(messages.length);
+  }, [messages.length]);
 
   // Notify parent of size changes
+  const onSizeChangeRef = useRef(onSizeChange);
+  onSizeChangeRef.current = onSizeChange;
   useEffect(() => {
-    onSizeChange?.(windowSize);
-  }, [windowSize, onSizeChange]);
+    onSizeChangeRef.current?.(windowSize);
+  }, [windowSize]);
 
   const togglePin = () => {
     setIsPinned(!isPinned);
@@ -824,7 +830,7 @@ export function FloatingChatWindow({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => applyPreset(preset.models)}
+                        onClick={() => applyPreset({ name: preset.name, models: preset.models })}
                         className="flex-1 justify-between text-xs h-8"
                       >
                         <span className="flex-1 text-left truncate">

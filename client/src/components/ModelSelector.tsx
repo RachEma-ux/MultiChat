@@ -14,7 +14,7 @@ interface ModelSelectorProps {
   onToggleModel: (provider: string, model: string) => void;
   onAddModel: () => void;
   onTogglePresets?: () => void;
-  onApplyPreset?: (models: string[]) => void;
+  onApplyPreset?: (preset: { name: string; models: string[] }) => void;
   onCreatePreset?: () => void;
   customPresets?: CustomPreset[];
   onEditPreset?: (preset: CustomPreset) => void;
@@ -92,7 +92,7 @@ export function ModelSelector({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onApplyPreset?.(preset.models)}
+                  onClick={() => onApplyPreset?.({ name: preset.name, models: preset.models })}
                   className="flex-1 justify-between text-xs h-8"
                 >
                   <span className="flex-1 text-left truncate">

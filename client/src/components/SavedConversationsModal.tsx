@@ -33,7 +33,8 @@ export function SavedConversationsModal({
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [availableTags, setAvailableTags] = useState<string[]>([]);
   
-  const { user, isAuthenticated, getLoginUrl } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+  const loginUrl = '/login'; // Default login URL
   const {
     isSyncing,
     cloudRecentConversations,
@@ -274,7 +275,7 @@ export function SavedConversationsModal({
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => window.location.href = getLoginUrl()}
+                onClick={() => window.location.href = loginUrl}
                 className="gap-2"
               >
                 <LogIn className="h-4 w-4" />

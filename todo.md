@@ -80,3 +80,7 @@
 - [x] Implement Multiple Windows feature (independent chat windows)
 - [x] Implement Window Presets (save/restore window layouts)
 - [x] Implement Minimize to Tray (dock at bottom for minimized windows)
+
+## Critical Bug Fixes (User Reported)
+- [x] Fix Models button causing React error #185 (fixed infinite loop in useEffect)
+- [x] Fix Presets button - now shows Quick Presets panel correctly
