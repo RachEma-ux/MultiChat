@@ -180,3 +180,4 @@
 - [x] Fix freezing icons (Sort dropdown and Templates button) - replaced Radix components with custom ones
 - [x] Fix floating window drag behavior (snaps back to left) - removed left edge snapping
 - [x] Implement centralized z-index management system to permanently fix layering issues
+- [x] Fix Sort dropdown menu going off-screen on mobile (should open to the right)

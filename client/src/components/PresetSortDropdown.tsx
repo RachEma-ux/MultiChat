@@ -57,7 +57,7 @@ export function PresetSortDropdown({ currentSort, onSortChange }: PresetSortDrop
       </Button>
       
       {isOpen && (
-        <div className="absolute right-0 top-full mt-1 w-40 bg-popover border border-border rounded-md shadow-lg z-[300] py-1">
+        <div className="absolute left-0 top-full mt-1 w-40 bg-popover border border-border rounded-md shadow-lg z-[300] py-1">
           {SORT_OPTIONS.map((option) => (
             <button
               key={option.value}
