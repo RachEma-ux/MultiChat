@@ -174,3 +174,5 @@
 - [x] Investigate infinite loop or heavy re-rendering in PresetsPanel
 - [x] Optimize preset-related components for performance (simplified UI with single action menu per preset)
 - [x] Fix page freeze on mobile devices (simplified dropdown menu, disabled recommendations by default, added useMemo)
+- [x] Fix page freeze when tapping +New button (replaced Radix Dialog with custom modal)
+- [x] Fix layout issue with Quick Presets title cut off on mobile (added flex-wrap)

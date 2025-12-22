@@ -1004,9 +1004,9 @@ export function FloatingChatWindow({
         {showPresets && !showModelSelector && (
           <div className="p-3 md:p-4 border-b border-border bg-muted/50 max-h-[50vh] overflow-y-auto">
             <div className="mb-3 p-3 bg-background rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-medium">Quick Presets</h3>
-                <div className="flex items-center gap-1">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <h3 className="text-sm font-medium shrink-0">Quick Presets</h3>
+                <div className="flex items-center gap-1 flex-wrap">
                   <PresetSortDropdown currentSort={presetSortOption} onSortChange={setPresetSortOption} />
                   <Button variant="ghost" size="sm" onClick={() => setShowTemplates(true)} className="h-7 w-7 p-0" title="Browse templates">
                     <Layout className="h-3 w-3" />
