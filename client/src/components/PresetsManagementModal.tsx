@@ -1,16 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { X, Plus, Edit, Trash2, Copy, Save, Download, Upload, Search, GripVertical, Tag } from 'lucide-react';
+import { X, Plus, Edit, Trash2, Copy, Save, Download, Upload, Search, GripVertical, Tag, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface CustomPreset {
@@ -56,6 +49,8 @@ export function PresetsManagementModal({
   const [presetModels, setPresetModels] = useState<string[]>([]);
   const [selectedProvider, setSelectedProvider] = useState('');
   const [selectedModel, setSelectedModel] = useState('');
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
   const [openProviders, setOpenProviders] = useState<Record<string, boolean>>({});
   const [deletingPresetId, setDeletingPresetId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -353,48 +348,99 @@ export function PresetsManagementModal({
                       {/* Provider Dropdown */}
                       <div>
                         <label className="text-sm text-muted-foreground mb-1 block">Select Provider</label>
-                        <Select
-                          value={selectedProvider}
-                          onValueChange={(value) => {
-                            setSelectedProvider(value);
-                            setSelectedModel('');
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Choose a provider" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
-                              <SelectItem key={key} value={key}>
-                                <div className="flex items-center gap-2">
-                                  <div className={`w-2 h-2 rounded-full ${provider.color}`} />
-                                  {provider.name}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowProviderDropdown(!showProviderDropdown);
+                              setShowModelDropdown(false);
+                            }}
+                            className="w-full flex items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                          >
+                            {selectedProvider ? (
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${AI_PROVIDERS[selectedProvider]?.color}`} />
+                                <span>{AI_PROVIDERS[selectedProvider]?.name}</span>
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground">Choose a provider</span>
+                            )}
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </button>
+                          
+                          {showProviderDropdown && (
+                            <>
+                              <div 
+                                className="fixed inset-0 z-[450]" 
+                                onClick={() => setShowProviderDropdown(false)}
+                              />
+                              <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                                {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
+                                  <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedProvider(key);
+                                      setSelectedModel('');
+                                      setShowProviderDropdown(false);
+                                    }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                                  >
+                                    <div className={`w-2 h-2 rounded-full ${provider.color}`} />
+                                    <span>{provider.name}</span>
+                                  </button>
+                                ))}
+                              </div>
+                            </>
+                          )}
+                        </div>
                       </div>
 
                       {/* Model Dropdown */}
                       {selectedProvider && (
                         <div>
                           <label className="text-sm text-muted-foreground mb-1 block">Select Model</label>
-                          <Select
-                            value={selectedModel}
-                            onValueChange={setSelectedModel}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choose a model" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {AI_PROVIDERS[selectedProvider]?.models.map((model) => (
-                                <SelectItem key={model} value={model}>
-                                  {model}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowModelDropdown(!showModelDropdown);
+                                setShowProviderDropdown(false);
+                              }}
+                              className="w-full flex items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+                            >
+                              {selectedModel ? (
+                                <span>{selectedModel}</span>
+                              ) : (
+                                <span className="text-muted-foreground">Choose a model</span>
+                              )}
+                              <ChevronDown className="h-4 w-4 opacity-50" />
+                            </button>
+                            
+                            {showModelDropdown && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-[450]" 
+                                  onClick={() => setShowModelDropdown(false)}
+                                />
+                                <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                                  {AI_PROVIDERS[selectedProvider]?.models.map((model) => (
+                                    <button
+                                      key={model}
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedModel(model);
+                                        setShowModelDropdown(false);
+                                      }}
+                                      className="w-full px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                                    >
+                                      {model}
+                                    </button>
+                                  ))}
+                                </div>
+                              </>
+                            )}
+                          </div>
                         </div>
                       )}
 

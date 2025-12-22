@@ -202,3 +202,8 @@
 - [x] Remove ChatPage completely - use FloatingChatWindow on EmptyPage instead
 - [x] Update routing so Chat mode opens a new floating window on EmptyPage
 - [x] Ensure consistency across mobile and desktop versions
+
+
+## Bug Fixes - Dropdown Issues (User Reported)
+- [x] Fix Presets Management modal dropdown (provider/model selector disappeared)
+- [x] Fix Models panel dropdown freezing on mobile

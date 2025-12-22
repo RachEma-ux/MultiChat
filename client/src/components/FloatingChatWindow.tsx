@@ -987,13 +987,8 @@ export function FloatingChatWindow({
         {showModelSelector && (
           <ModelSelector
             selectedModels={selectedModels}
-            selectedProvider=""
-            selectedModel=""
             showPresets={showPresets}
             onToggleModel={toggleModel}
-            onProviderChange={() => {}}
-            onModelChange={() => {}}
-            onAddModel={() => {}}
             onTogglePresets={() => setShowPresets(!showPresets)}
             onApplyPreset={applyPreset}
             onCreatePreset={() => {

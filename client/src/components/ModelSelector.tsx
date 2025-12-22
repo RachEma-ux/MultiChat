@@ -1,18 +1,14 @@
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Plus, Pencil, Trash2 } from 'lucide-react';
+import { X, Plus, Pencil, Trash2, ChevronDown } from 'lucide-react';
 import { AI_PROVIDERS } from '@/lib/ai-providers';
 import { CustomPreset } from './PresetsManagementModal';
+import { toast } from 'sonner';
 
 interface ModelSelectorProps {
   selectedModels: string[];
-  selectedProvider: string;
-  selectedModel: string;
   showPresets?: boolean;
-  onProviderChange: (provider: string) => void;
-  onModelChange: (model: string) => void;
   onToggleModel: (provider: string, model: string) => void;
-  onAddModel: () => void;
   onTogglePresets?: () => void;
   onApplyPreset?: (preset: { name: string; models: string[] }) => void;
   onCreatePreset?: () => void;
@@ -29,13 +25,8 @@ const getProviderColor = (provider?: string): string => {
 
 export function ModelSelector({
   selectedModels,
-  selectedProvider,
-  selectedModel,
   showPresets = false,
-  onProviderChange,
-  onModelChange,
   onToggleModel,
-  onAddModel,
   onTogglePresets,
   onApplyPreset,
   onCreatePreset,
@@ -43,6 +34,38 @@ export function ModelSelector({
   onEditPreset,
   onDeletePreset
 }: ModelSelectorProps) {
+  // Internal state for provider/model selection
+  const [selectedProvider, setSelectedProvider] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [showProviderDropdown, setShowProviderDropdown] = useState(false);
+  const [showModelDropdown, setShowModelDropdown] = useState(false);
+
+  const handleProviderSelect = useCallback((providerKey: string) => {
+    setSelectedProvider(providerKey);
+    setSelectedModel('');
+    setShowProviderDropdown(false);
+  }, []);
+
+  const handleModelSelect = useCallback((model: string) => {
+    setSelectedModel(model);
+    setShowModelDropdown(false);
+  }, []);
+
+  const handleAddModel = useCallback(() => {
+    if (selectedProvider && selectedModel) {
+      const modelKey = `${selectedProvider}:${selectedModel}`;
+      if (!selectedModels.includes(modelKey)) {
+        onToggleModel(selectedProvider, selectedModel);
+        toast.success(`Added ${selectedModel}`);
+      } else {
+        toast.error('Model already selected');
+      }
+    }
+  }, [selectedProvider, selectedModel, selectedModels, onToggleModel]);
+
+  const providerEntries = Object.entries(AI_PROVIDERS);
+  const currentProvider = selectedProvider ? AI_PROVIDERS[selectedProvider as keyof typeof AI_PROVIDERS] : null;
+
   return (
     <div className="p-3 md:p-4 border-b border-border bg-muted/50">
       {/* Selected Models */}
@@ -135,45 +158,95 @@ export function ModelSelector({
       <div className="space-y-3">
         <h3 className="text-xs font-medium text-muted-foreground uppercase px-3 mb-3">Add Models</h3>
         
-        {/* Provider Dropdown */}
+        {/* Provider Dropdown - Custom Implementation */}
         <div className="px-3">
           <label className="text-xs font-medium mb-2 block">Select Provider</label>
-          <Select value={selectedProvider} onValueChange={(value) => {
-            onProviderChange(value);
-            onModelChange(''); // Reset model when provider changes
-          }}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Choose a provider" />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
-                <SelectItem key={key} value={key}>
-                  <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${provider.color}`} />
-                    {provider.name}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => {
+                setShowProviderDropdown(!showProviderDropdown);
+                setShowModelDropdown(false);
+              }}
+              className="w-full flex items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              {selectedProvider ? (
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${currentProvider?.color}`} />
+                  <span>{currentProvider?.name}</span>
+                </div>
+              ) : (
+                <span className="text-muted-foreground">Choose a provider</span>
+              )}
+              <ChevronDown className="h-4 w-4 opacity-50" />
+            </button>
+            
+            {showProviderDropdown && (
+              <>
+                <div 
+                  className="fixed inset-0 z-[400]" 
+                  onClick={() => setShowProviderDropdown(false)}
+                />
+                <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                  {providerEntries.map(([key, provider]) => (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => handleProviderSelect(key)}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                    >
+                      <div className={`w-2 h-2 rounded-full ${provider.color}`} />
+                      <span>{provider.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
 
-        {/* Model Dropdown */}
+        {/* Model Dropdown - Custom Implementation */}
         {selectedProvider && (
           <div className="px-3">
             <label className="text-xs font-medium mb-2 block">Select Model</label>
-            <Select value={selectedModel} onValueChange={onModelChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Choose a model" />
-              </SelectTrigger>
-              <SelectContent>
-                {AI_PROVIDERS[selectedProvider as keyof typeof AI_PROVIDERS]?.models.map((model) => (
-                  <SelectItem key={model} value={model}>
-                    {model}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowModelDropdown(!showModelDropdown);
+                  setShowProviderDropdown(false);
+                }}
+                className="w-full flex items-center justify-between gap-2 rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors hover:bg-accent focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {selectedModel ? (
+                  <span>{selectedModel}</span>
+                ) : (
+                  <span className="text-muted-foreground">Choose a model</span>
+                )}
+                <ChevronDown className="h-4 w-4 opacity-50" />
+              </button>
+              
+              {showModelDropdown && (
+                <>
+                  <div 
+                    className="fixed inset-0 z-[400]" 
+                    onClick={() => setShowModelDropdown(false)}
+                  />
+                  <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                    {currentProvider?.models.map((model) => (
+                      <button
+                        key={model}
+                        type="button"
+                        onClick={() => handleModelSelect(model)}
+                        className="w-full px-3 py-2 text-sm hover:bg-accent transition-colors text-left"
+                      >
+                        {model}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         )}
 
@@ -181,7 +254,7 @@ export function ModelSelector({
         {selectedProvider && selectedModel && (
           <div className="px-3">
             <Button
-              onClick={onAddModel}
+              onClick={handleAddModel}
               className="w-full"
               size="sm"
             >
