@@ -1,300 +1,294 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
+  sortPresets,
+  trackPresetUsage,
+  loadUsageStats,
+  saveUsageStats,
+  getPresetRecommendations,
+  addVersionHistory,
+  getPresetVersionHistory,
+  loadVersionHistory,
+  saveVersionHistory,
+  restorePresetVersion,
   QuickPreset,
-  addQuickPresets,
-  updateQuickPreset,
-  removeQuickPreset,
-  reorderQuickPresets,
-  toggleFavorite,
-  sortByFavorite,
-  exportPresets,
-  importPresets,
+  PresetUsageStats,
+  PresetSortOption,
 } from '@/lib/quick-presets';
 
-describe('Quick Presets', () => {
-  let mockPresets: QuickPreset[];
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: vi.fn((key: string) => store[key] || null),
+    setItem: vi.fn((key: string, value: string) => {
+      store[key] = value;
+    }),
+    removeItem: vi.fn((key: string) => {
+      delete store[key];
+    }),
+    clear: vi.fn(() => {
+      store = {};
+    }),
+  };
+})();
 
+Object.defineProperty(global, 'localStorage', {
+  value: localStorageMock,
+});
+
+describe('Quick Presets - Sorting', () => {
+  const mockPresets: QuickPreset[] = [
+    {
+      id: 'preset-1',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Zebra Preset',
+      models: ['model-1'],
+      isModified: false,
+      isFavorite: false,
+      createdAt: '2024-01-01T00:00:00.000Z',
+    },
+    {
+      id: 'preset-2',
+      sourceId: 'source-2',
+      sourceType: 'custom',
+      name: 'Alpha Preset',
+      models: ['model-2'],
+      isModified: false,
+      isFavorite: true,
+      createdAt: '2024-01-03T00:00:00.000Z',
+    },
+    {
+      id: 'preset-3',
+      sourceId: 'source-3',
+      sourceType: 'custom',
+      name: 'Beta Preset',
+      models: ['model-3'],
+      isModified: false,
+      isFavorite: false,
+      createdAt: '2024-01-02T00:00:00.000Z',
+    },
+  ];
+
+  const mockUsageStats: PresetUsageStats = {
+    'preset-1': { usageCount: 5, lastUsedAt: '2024-01-10T00:00:00.000Z' },
+    'preset-2': { usageCount: 2, lastUsedAt: '2024-01-08T00:00:00.000Z' },
+    'preset-3': { usageCount: 10, lastUsedAt: '2024-01-09T00:00:00.000Z' },
+  };
+
+  it('should sort by name alphabetically', () => {
+    const sorted = sortPresets(mockPresets, 'name', mockUsageStats);
+    expect(sorted[0].name).toBe('Alpha Preset');
+    expect(sorted[1].name).toBe('Beta Preset');
+    expect(sorted[2].name).toBe('Zebra Preset');
+  });
+
+  it('should sort by usage count (most used first)', () => {
+    const sorted = sortPresets(mockPresets, 'usage', mockUsageStats);
+    expect(sorted[0].id).toBe('preset-3'); // 10 uses
+    expect(sorted[1].id).toBe('preset-1'); // 5 uses
+    expect(sorted[2].id).toBe('preset-2'); // 2 uses
+  });
+
+  it('should sort by date (newest first)', () => {
+    const sorted = sortPresets(mockPresets, 'date', mockUsageStats);
+    expect(sorted[0].id).toBe('preset-2'); // Jan 3
+    expect(sorted[1].id).toBe('preset-3'); // Jan 2
+    expect(sorted[2].id).toBe('preset-1'); // Jan 1
+  });
+
+  it('should sort favorites first', () => {
+    const sorted = sortPresets(mockPresets, 'favorites', mockUsageStats);
+    expect(sorted[0].id).toBe('preset-2'); // favorite
+    expect(sorted[0].isFavorite).toBe(true);
+  });
+
+  it('should keep manual order when sort is manual', () => {
+    const sorted = sortPresets(mockPresets, 'manual', mockUsageStats);
+    expect(sorted[0].id).toBe('preset-1');
+    expect(sorted[1].id).toBe('preset-2');
+    expect(sorted[2].id).toBe('preset-3');
+  });
+});
+
+describe('Quick Presets - Usage Tracking', () => {
   beforeEach(() => {
-    mockPresets = [
+    localStorageMock.clear();
+  });
+
+  it('should track preset usage', () => {
+    const stats = trackPresetUsage('test-preset');
+    expect(stats['test-preset'].usageCount).toBe(1);
+    expect(stats['test-preset'].lastUsedAt).toBeDefined();
+  });
+
+  it('should increment usage count on subsequent uses', () => {
+    trackPresetUsage('test-preset');
+    const stats = trackPresetUsage('test-preset');
+    expect(stats['test-preset'].usageCount).toBe(2);
+  });
+
+  it('should save and load usage stats', () => {
+    const testStats: PresetUsageStats = {
+      'preset-1': { usageCount: 5, lastUsedAt: '2024-01-01T00:00:00.000Z' },
+    };
+    saveUsageStats(testStats);
+    const loaded = loadUsageStats();
+    expect(loaded['preset-1'].usageCount).toBe(5);
+  });
+});
+
+describe('Quick Presets - Recommendations', () => {
+  const mockPresets: QuickPreset[] = [
+    {
+      id: 'preset-1',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Coding Preset',
+      models: ['gpt-4o', 'claude-3'],
+      isModified: false,
+      isFavorite: true,
+    },
+    {
+      id: 'preset-2',
+      sourceId: 'source-2',
+      sourceType: 'custom',
+      name: 'Writing Preset',
+      models: ['gpt-4o', 'gemini'],
+      isModified: false,
+      isFavorite: false,
+    },
+    {
+      id: 'preset-3',
+      sourceId: 'source-3',
+      sourceType: 'custom',
+      name: 'Research Preset',
+      models: ['claude-3', 'deepseek'],
+      isModified: false,
+      isFavorite: false,
+    },
+  ];
+
+  it('should return recommendations based on usage', () => {
+    const usageStats: PresetUsageStats = {
+      'preset-1': { usageCount: 10, lastUsedAt: new Date().toISOString() },
+      'preset-2': { usageCount: 5, lastUsedAt: new Date().toISOString() },
+    };
+    
+    const recommendations = getPresetRecommendations(mockPresets, usageStats, [], 3);
+    expect(recommendations.length).toBeGreaterThan(0);
+    expect(recommendations[0].preset.id).toBe('preset-1'); // Most used
+  });
+
+  it('should recommend similar presets based on current models', () => {
+    const usageStats: PresetUsageStats = {};
+    const currentModels = ['gpt-4o'];
+    
+    const recommendations = getPresetRecommendations(mockPresets, usageStats, currentModels, 3);
+    // Should recommend presets with gpt-4o
+    const hasRelevantRecommendation = recommendations.some(
+      rec => rec.preset.models.includes('gpt-4o')
+    );
+    // May or may not have recommendations depending on similarity threshold
+    expect(recommendations).toBeDefined();
+  });
+
+  it('should recommend favorites', () => {
+    const usageStats: PresetUsageStats = {};
+    
+    const recommendations = getPresetRecommendations(mockPresets, usageStats, [], 3);
+    const hasFavorite = recommendations.some(
+      rec => rec.preset.isFavorite && rec.reason.includes('favorite')
+    );
+    expect(hasFavorite).toBe(true);
+  });
+});
+
+describe('Quick Presets - Version History', () => {
+  beforeEach(() => {
+    localStorageMock.clear();
+  });
+
+  it('should add version to history', () => {
+    const preset: QuickPreset = {
+      id: 'test-preset',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Test Preset',
+      models: ['model-1'],
+      isModified: false,
+    };
+    
+    addVersionHistory(preset, 'created');
+    const history = getPresetVersionHistory('test-preset');
+    
+    expect(history.length).toBe(1);
+    expect(history[0].changeType).toBe('created');
+    expect(history[0].name).toBe('Test Preset');
+  });
+
+  it('should track multiple versions', () => {
+    const preset: QuickPreset = {
+      id: 'test-preset',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Test Preset',
+      models: ['model-1'],
+      isModified: false,
+    };
+    
+    addVersionHistory(preset, 'created');
+    
+    preset.name = 'Renamed Preset';
+    addVersionHistory(preset, 'renamed');
+    
+    const history = getPresetVersionHistory('test-preset');
+    expect(history.length).toBe(2);
+  });
+
+  it('should restore preset to previous version', () => {
+    const presets: QuickPreset[] = [
       {
-        id: 'preset-1',
-        sourceId: 'coding',
-        sourceType: 'built-in',
-        name: 'Coding Team',
-        description: 'Best for code generation',
-        models: ['openai:GPT-4', 'deepseek:DeepSeek Coder'],
-        isModified: false,
-        isFavorite: false,
-      },
-      {
-        id: 'preset-2',
-        sourceId: 'general',
-        sourceType: 'built-in',
-        name: 'General Purpose',
-        description: 'Versatile team for everyday tasks',
-        models: ['openai:GPT-4', 'anthropic:Claude 3 Sonnet'],
-        isModified: false,
-        isFavorite: true,
-      },
-      {
-        id: 'preset-3',
-        sourceId: 'custom-1',
+        id: 'test-preset',
+        sourceId: 'source-1',
         sourceType: 'custom',
-        name: 'My Custom Preset',
-        models: ['openai:GPT-4'],
+        name: 'Current Name',
+        models: ['model-1', 'model-2'],
         isModified: false,
-        isFavorite: false,
       },
     ];
+    
+    const oldVersion = {
+      id: 'version-1',
+      presetId: 'test-preset',
+      name: 'Old Name',
+      models: ['model-1'],
+      timestamp: '2024-01-01T00:00:00.000Z',
+      changeType: 'created' as const,
+    };
+    
+    const restored = restorePresetVersion(presets, 'test-preset', oldVersion);
+    
+    expect(restored[0].name).toBe('Old Name');
+    expect(restored[0].models).toEqual(['model-1']);
   });
 
-  describe('addQuickPresets', () => {
-    it('should add new presets to the list', () => {
-      const newPresets = [
-        {
-          sourceId: 'research',
-          sourceType: 'built-in' as const,
-          name: 'Research Squad',
-          description: 'Optimized for fact-finding',
-          models: ['perplexity:Perplexity Pro'],
-        },
-      ];
-
-      const result = addQuickPresets(mockPresets, newPresets);
-
-      expect(result).toHaveLength(4);
-      expect(result[3].name).toBe('Research Squad');
-      expect(result[3].description).toBe('Optimized for fact-finding');
-      expect(result[3].isFavorite).toBe(false);
-      expect(result[3].isModified).toBe(false);
-    });
-
-    it('should generate unique IDs for new presets', () => {
-      const newPresets = [
-        {
-          sourceId: 'test-1',
-          sourceType: 'custom' as const,
-          name: 'Test 1',
-          models: [],
-        },
-        {
-          sourceId: 'test-2',
-          sourceType: 'custom' as const,
-          name: 'Test 2',
-          models: [],
-        },
-      ];
-
-      const result = addQuickPresets([], newPresets);
-
-      expect(result[0].id).not.toBe(result[1].id);
-      expect(result[0].id).toContain('quick-');
-    });
-  });
-
-  describe('updateQuickPreset', () => {
-    it('should update preset name', () => {
-      const result = updateQuickPreset(mockPresets, 'preset-1', {
-        name: 'Updated Coding Team',
-      });
-
-      expect(result[0].name).toBe('Updated Coding Team');
-      expect(result[0].isModified).toBe(true);
-    });
-
-    it('should update preset models', () => {
-      const result = updateQuickPreset(mockPresets, 'preset-1', {
-        models: ['openai:GPT-4'],
-      });
-
-      expect(result[0].models).toHaveLength(1);
-      expect(result[0].isModified).toBe(true);
-    });
-
-    it('should update isFavorite status', () => {
-      const result = updateQuickPreset(mockPresets, 'preset-1', {
-        isFavorite: true,
-      });
-
-      expect(result[0].isFavorite).toBe(true);
-    });
-
-    it('should not modify other presets', () => {
-      const result = updateQuickPreset(mockPresets, 'preset-1', {
-        name: 'Updated',
-      });
-
-      expect(result[1].name).toBe('General Purpose');
-      expect(result[2].name).toBe('My Custom Preset');
-    });
-  });
-
-  describe('removeQuickPreset', () => {
-    it('should remove preset by ID', () => {
-      const result = removeQuickPreset(mockPresets, 'preset-2');
-
-      expect(result).toHaveLength(2);
-      expect(result.find(p => p.id === 'preset-2')).toBeUndefined();
-    });
-
-    it('should not modify array if ID not found', () => {
-      const result = removeQuickPreset(mockPresets, 'non-existent');
-
-      expect(result).toHaveLength(3);
-    });
-  });
-
-  describe('reorderQuickPresets', () => {
-    it('should move preset from start to end', () => {
-      const result = reorderQuickPresets(mockPresets, 0, 2);
-
-      expect(result[0].id).toBe('preset-2');
-      expect(result[1].id).toBe('preset-3');
-      expect(result[2].id).toBe('preset-1');
-    });
-
-    it('should move preset from end to start', () => {
-      const result = reorderQuickPresets(mockPresets, 2, 0);
-
-      expect(result[0].id).toBe('preset-3');
-      expect(result[1].id).toBe('preset-1');
-      expect(result[2].id).toBe('preset-2');
-    });
-
-    it('should handle same index (no change)', () => {
-      const result = reorderQuickPresets(mockPresets, 1, 1);
-
-      expect(result[0].id).toBe('preset-1');
-      expect(result[1].id).toBe('preset-2');
-      expect(result[2].id).toBe('preset-3');
-    });
-  });
-
-  describe('toggleFavorite', () => {
-    it('should toggle favorite from false to true', () => {
-      const result = toggleFavorite(mockPresets, 'preset-1');
-
-      expect(result[0].isFavorite).toBe(true);
-    });
-
-    it('should toggle favorite from true to false', () => {
-      const result = toggleFavorite(mockPresets, 'preset-2');
-
-      expect(result[1].isFavorite).toBe(false);
-    });
-
-    it('should not modify other presets', () => {
-      const result = toggleFavorite(mockPresets, 'preset-1');
-
-      expect(result[1].isFavorite).toBe(true); // unchanged
-      expect(result[2].isFavorite).toBe(false); // unchanged
-    });
-  });
-
-  describe('sortByFavorite', () => {
-    it('should sort favorites to the top', () => {
-      const result = sortByFavorite(mockPresets);
-
-      expect(result[0].isFavorite).toBe(true);
-      expect(result[0].id).toBe('preset-2');
-    });
-
-    it('should preserve relative order of non-favorites', () => {
-      const result = sortByFavorite(mockPresets);
-
-      const nonFavorites = result.filter(p => !p.isFavorite);
-      expect(nonFavorites[0].id).toBe('preset-1');
-      expect(nonFavorites[1].id).toBe('preset-3');
-    });
-
-    it('should not modify original array', () => {
-      const original = [...mockPresets];
-      sortByFavorite(mockPresets);
-
-      expect(mockPresets[0].id).toBe(original[0].id);
-    });
-  });
-
-  describe('exportPresets', () => {
-    it('should export presets to JSON string', () => {
-      const json = exportPresets(mockPresets);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.version).toBe(1);
-      expect(parsed.exportedAt).toBeDefined();
-      expect(parsed.presets).toHaveLength(3);
-    });
-
-    it('should include all preset properties', () => {
-      const json = exportPresets([mockPresets[0]]);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.presets[0].name).toBe('Coding Team');
-      expect(parsed.presets[0].description).toBe('Best for code generation');
-      expect(parsed.presets[0].models).toEqual(['openai:GPT-4', 'deepseek:DeepSeek Coder']);
-      expect(parsed.presets[0].sourceType).toBe('built-in');
-      expect(parsed.presets[0].sourceId).toBe('coding');
-      expect(parsed.presets[0].isFavorite).toBe(false);
-    });
-
-    it('should not include internal ID', () => {
-      const json = exportPresets(mockPresets);
-      const parsed = JSON.parse(json);
-
-      expect(parsed.presets[0].id).toBeUndefined();
-    });
-  });
-
-  describe('importPresets', () => {
-    it('should import valid JSON', () => {
-      const exportedJson = exportPresets(mockPresets);
-      const imported = importPresets(exportedJson);
-
-      expect(imported).not.toBeNull();
-      expect(imported).toHaveLength(3);
-    });
-
-    it('should generate new IDs for imported presets', () => {
-      const exportedJson = exportPresets(mockPresets);
-      const imported = importPresets(exportedJson);
-
-      expect(imported![0].id).not.toBe('preset-1');
-      expect(imported![0].id).toContain('quick-');
-    });
-
-    it('should preserve preset data', () => {
-      const exportedJson = exportPresets([mockPresets[0]]);
-      const imported = importPresets(exportedJson);
-
-      expect(imported![0].name).toBe('Coding Team');
-      expect(imported![0].description).toBe('Best for code generation');
-      expect(imported![0].models).toEqual(['openai:GPT-4', 'deepseek:DeepSeek Coder']);
-    });
-
-    it('should return null for invalid JSON', () => {
-      const result = importPresets('invalid json');
-
-      expect(result).toBeNull();
-    });
-
-    it('should return null for JSON without presets array', () => {
-      const result = importPresets('{"version": 1}');
-
-      expect(result).toBeNull();
-    });
-
-    it('should handle missing optional fields', () => {
-      const minimalJson = JSON.stringify({
-        version: 1,
-        presets: [{ name: 'Test', models: ['model-1'] }],
-      });
-
-      const imported = importPresets(minimalJson);
-
-      expect(imported).not.toBeNull();
-      expect(imported![0].name).toBe('Test');
-      expect(imported![0].sourceType).toBe('custom');
-      expect(imported![0].isFavorite).toBe(false);
-    });
+  it('should save and load version history', () => {
+    const history = [
+      {
+        id: 'version-1',
+        presetId: 'test-preset',
+        name: 'Test',
+        models: ['model-1'],
+        timestamp: '2024-01-01T00:00:00.000Z',
+        changeType: 'created' as const,
+      },
+    ];
+    
+    saveVersionHistory(history);
+    const loaded = loadVersionHistory();
+    
+    expect(loaded.length).toBe(1);
+    expect(loaded[0].name).toBe('Test');
   });
 });

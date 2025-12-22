@@ -373,16 +373,16 @@ export function PresetSelectionDialog({
                             >
                               <div className="flex-1 text-left">
                                 <div className="flex items-center gap-2">
-                                                                  <span className="font-medium">{preset.name}</span>
-                                                                  <span className="text-xs text-muted-foreground">
-                                                                    ({preset.models.length} models)
-                                                                  </span>
-                                                                </div>
-                                                                {preset.description && (
-                                                                  <p className="text-xs text-muted-foreground mt-1">
-                                                                    {preset.description}
-                                                                  </p>
-                                                                )}
+                                  <span className="font-medium">{preset.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({preset.models.length} models)
+                                  </span>
+                                </div>
+                                {preset.description && (
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {preset.description}
+                                  </p>
+                                )}
                               </div>
                               <div className={`w-5 h-5 rounded border flex items-center justify-center ${
                                 selectedIds.has(preset.id)

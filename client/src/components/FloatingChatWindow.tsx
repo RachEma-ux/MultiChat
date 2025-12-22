@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, GripVertical, Plus, Pencil, Trash2, Check, Star, Download, Upload, Share2, BarChart2, Layout } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, GripVertical, Plus, Pencil, Trash2, Check, Star, Download, Upload, Share2, BarChart2, Layout, History } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -22,9 +22,12 @@ import { PresetSelectionDialog } from './PresetSelectionDialog';
 import { SavedConversationsModal } from './SavedConversationsModal';
 import { KeyboardShortcutsHelp } from './KeyboardShortcutsHelp';
 import { PresetTemplatesModal } from './PresetTemplatesModal';
+import { PresetVersionHistoryModal } from './PresetVersionHistoryModal';
+import { PresetRecommendations } from './PresetRecommendations';
+import { PresetSortDropdown } from './PresetSortDropdown';
 import { useKeyboardShortcuts, SHORTCUT_KEYS } from '@/hooks/useKeyboardShortcuts';
 import { AI_PROVIDERS, MODEL_PRESETS } from '@/lib/ai-providers';
-import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset, reorderQuickPresets, toggleFavorite, exportPresets, importPresets, trackPresetUsage, loadUsageStats, generateShareableUrl, checkUrlForSharedPreset, PRESET_TEMPLATES, getTemplateCategories, createPresetFromTemplate, PresetTemplate } from '@/lib/quick-presets';
+import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset, reorderQuickPresets, toggleFavorite, exportPresets, importPresets, trackPresetUsage, loadUsageStats, generateShareableUrl, checkUrlForSharedPreset, PRESET_TEMPLATES, getTemplateCategories, createPresetFromTemplate, PresetTemplate, PresetSortOption, sortPresets, PresetVersion, restorePresetVersion, getPresetVersionHistory } from '@/lib/quick-presets';
 import { toast } from 'sonner';
 
 interface Attachment {
@@ -96,6 +99,11 @@ export function FloatingChatWindow({
   const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [usageStats, setUsageStats] = useState(() => loadUsageStats());
+  const [presetSortOption, setPresetSortOption] = useState<PresetSortOption>('manual');
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionHistoryPresetId, setVersionHistoryPresetId] = useState<string>('');
+  const [versionHistoryPresetName, setVersionHistoryPresetName] = useState<string>('');
+  const [showRecommendations, setShowRecommendations] = useState(true);
   const [windowSize, setWindowSize] = useState({ width: 400, height: 500 });
   const [isResizing, setIsResizing] = useState(false);
   const [snapIndicator, setSnapIndicator] = useState<'left' | 'right' | 'top' | null>(null);
@@ -854,6 +862,11 @@ export function FloatingChatWindow({
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-sm font-medium">Quick Presets</h3>
                   <div className="flex items-center gap-1">
+                    {/* Sort dropdown */}
+                    <PresetSortDropdown
+                      currentSort={presetSortOption}
+                      onSortChange={setPresetSortOption}
+                    />
                     {/* Templates button */}
                     <Button
                       variant="ghost"
@@ -929,9 +942,20 @@ export function FloatingChatWindow({
                     </Button>
                   </div>
                 </div>
+                {/* Recommendations section */}
+                {showRecommendations && quickPresets.length > 0 && (
+                  <PresetRecommendations
+                    presets={quickPresets}
+                    usageStats={usageStats}
+                    currentModels={selectedModels}
+                    onApplyPreset={(preset) => applyPreset({ id: preset.id, name: preset.name, models: preset.models })}
+                    onDismiss={() => setShowRecommendations(false)}
+                    className="mb-3"
+                  />
+                )}
                 <div className="space-y-1">
                   {/* Quick Presets from quickPresets state with drag-and-drop */}
-                  {quickPresets.map((preset, index) => (
+                  {sortPresets(quickPresets, presetSortOption, usageStats).map((preset, index) => (
                     <div
                       key={preset.id}
                       draggable
@@ -1064,6 +1088,21 @@ export function FloatingChatWindow({
                         title={preset.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                       >
                         <Star className={`h-3 w-3 ${preset.isFavorite ? 'fill-current' : ''}`} />
+                      </Button>
+                      
+                      {/* History button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setVersionHistoryPresetId(preset.id);
+                          setVersionHistoryPresetName(preset.name);
+                          setShowVersionHistory(true);
+                        }}
+                        className="h-8 w-8 p-0"
+                        title="View version history"
+                      >
+                        <History className="h-3 w-3" />
                       </Button>
                       
                       {/* Share button */}
@@ -1296,6 +1335,20 @@ export function FloatingChatWindow({
         toast.success(`Added template: ${preset.name}`);
       }}
       existingPresetNames={quickPresets.map(p => p.name)}
+    />
+    
+    {/* Preset Version History Modal */}
+    <PresetVersionHistoryModal
+      open={showVersionHistory}
+      onOpenChange={setShowVersionHistory}
+      presetId={versionHistoryPresetId}
+      presetName={versionHistoryPresetName}
+      onRestore={(version) => {
+        const updated = restorePresetVersion(quickPresets, versionHistoryPresetId, version);
+        setQuickPresets(updated);
+        saveQuickPresets(updated);
+        toast.success(`Restored preset to version from ${new Date(version.timestamp).toLocaleString()}`);
+      }}
     />
     </>
   );
