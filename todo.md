@@ -182,3 +182,7 @@
 - [x] Implement centralized z-index management system to permanently fix layering issues
 - [x] Fix Sort dropdown menu going off-screen on mobile (should open to the right)
 - [x] Fix floating window snapping back to left side on mobile (magnet behavior)
+
+## Empty Mode Fix
+- [x] Fix Mode menu navigation - Empty mode now properly routes to `/` (EmptyPage)
+- [x] Chat mode properly shows current page indicator

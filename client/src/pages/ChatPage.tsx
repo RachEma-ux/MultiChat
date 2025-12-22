@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -169,6 +170,7 @@ interface SavedConversation {
 }
 
 export default function ChatPage() {
+  const [, setLocation] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
@@ -818,21 +820,44 @@ export default function ChatPage() {
                     onClick={() => setShowModeMenu(false)}
                   />
                   <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                    {['Agents', 'Chat', 'Conversation', 'Empty'].map((mode) => (
-                      <button
-                        key={mode}
-                        onClick={() => {
-                          setCurrentMode(mode as any);
-                          setShowModeMenu(false);
-                          toast.info(`Switched to ${mode} mode`);
-                        }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors ${
-                          currentMode === mode ? 'bg-accent' : ''
-                        }`}
-                      >
-                        {mode}
-                      </button>
-                    ))}
+                    <button
+                      onClick={() => {
+                        setShowModeMenu(false);
+                        toast.info('Agents mode coming soon');
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Agents
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowModeMenu(false);
+                        toast.info('Already in Chat mode');
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors bg-accent"
+                    >
+                      Chat
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowModeMenu(false);
+                        setLocation('/conversation');
+                        toast.info('Switched to Conversation mode');
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Conversation
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowModeMenu(false);
+                        setLocation('/');
+                        toast.info('Switched to Empty mode');
+                      }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      Empty
+                    </button>
                   </div>
                 </>
               )}
