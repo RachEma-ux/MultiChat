@@ -132,70 +132,76 @@ export function FloatingChatWindow({
   const handleMouseDown = useCallback((e: React.MouseEvent | React.TouchEvent) => {
     if (isPinned || isMaximized) return;
     
+    // Prevent default to stop text selection and other browser behaviors
+    e.preventDefault();
+    
     isDragging.current = true;
     const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
     const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
     dragStart.current = { x: clientX - position.x, y: clientY - position.y };
     
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', handleMouseUp);
-  }, [isPinned, isMaximized, position]);
+    // Store initial position for reference
+    const initialPos = { ...position };
+    
+    const moveHandler = (moveEvent: MouseEvent | TouchEvent) => {
+      if (!isDragging.current) return;
+      
+      // Prevent default to stop scrolling on touch devices
+      if (moveEvent.cancelable) {
+        moveEvent.preventDefault();
+      }
+      
+      const moveClientX = 'touches' in moveEvent ? moveEvent.touches[0].clientX : (moveEvent as MouseEvent).clientX;
+      const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0].clientY : (moveEvent as MouseEvent).clientY;
+      
+      // Calculate new position allowing full horizontal and vertical movement
+      const newX = Math.max(0, Math.min(window.innerWidth - 100, moveClientX - dragStart.current.x));
+      const newY = Math.max(0, Math.min(window.innerHeight - 50, moveClientY - dragStart.current.y));
+      
+      setPosition({ x: newX, y: newY });
+    };
+    
+    const upHandler = () => {
+      isDragging.current = false;
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+      document.removeEventListener('touchmove', moveHandler);
+      document.removeEventListener('touchend', upHandler);
+      
+      // Get current position for snap logic
+      setPosition(currentPos => {
+        let finalX = currentPos.x;
+        let finalY = currentPos.y;
+        
+        // Snap to edges if near
+        if (currentPos.x < SNAP_THRESHOLD) {
+          finalX = 0;
+        } else if (currentPos.x > window.innerWidth - windowSize.width - SNAP_THRESHOLD) {
+          finalX = Math.max(0, window.innerWidth - windowSize.width);
+        }
+        
+        if (currentPos.y < SNAP_THRESHOLD) {
+          finalY = 0;
+        } else if (currentPos.y > window.innerHeight - windowSize.height - SNAP_THRESHOLD) {
+          finalY = Math.max(0, window.innerHeight - windowSize.height);
+        }
+        
+        // Save to localStorage
+        localStorage.setItem('chatWindowPosition', JSON.stringify({ x: finalX, y: finalY }));
+        onPositionChange?.({ x: finalX, y: finalY });
+        
+        return { x: finalX, y: finalY };
+      });
+      
+      setSnapIndicator(null);
+    };
+    
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+    document.addEventListener('touchmove', moveHandler, { passive: false });
+    document.addEventListener('touchend', upHandler);
+  }, [isPinned, isMaximized, position, windowSize, SNAP_THRESHOLD, onPositionChange]);
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDragging.current) return;
-    
-    const newX = Math.max(0, Math.min(window.innerWidth - 400, e.clientX - dragStart.current.x));
-    const newY = Math.max(0, Math.min(window.innerHeight - 100, e.clientY - dragStart.current.y));
-    setPosition({ x: newX, y: newY });
-  }, []);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!isDragging.current) return;
-    e.preventDefault(); // Prevent scrolling while dragging
-    
-    const touch = e.touches[0];
-    const newX = Math.max(0, Math.min(window.innerWidth - 400, touch.clientX - dragStart.current.x));
-    const newY = Math.max(0, Math.min(window.innerHeight - 100, touch.clientY - dragStart.current.y));
-    setPosition({ x: newX, y: newY });
-  }, []);
-
-  const handleMouseUp = useCallback(() => {
-    isDragging.current = false;
-    document.removeEventListener('mousemove', handleMouseMove);
-    document.removeEventListener('mouseup', handleMouseUp);
-    document.removeEventListener('touchmove', handleTouchMove);
-    document.removeEventListener('touchend', handleMouseUp);
-    
-    // Snap to edge if near
-    let finalX = position.x;
-    let finalY = position.y;
-    
-    if (position.x < SNAP_THRESHOLD) {
-      finalX = 0;
-    } else if (position.x > window.innerWidth - windowSize.width - SNAP_THRESHOLD) {
-      finalX = window.innerWidth - windowSize.width;
-    }
-    
-    if (position.y < SNAP_THRESHOLD) {
-      finalY = 0;
-    } else if (position.y > window.innerHeight - windowSize.height - SNAP_THRESHOLD) {
-      finalY = window.innerHeight - windowSize.height;
-    }
-    
-    if (finalX !== position.x || finalY !== position.y) {
-      setPosition({ x: finalX, y: finalY });
-    }
-    
-    setSnapIndicator(null);
-    onPositionChange?.({ x: finalX, y: finalY });
-    
-    // Save window position and size to localStorage
-    localStorage.setItem('chatWindowPosition', JSON.stringify({ x: finalX, y: finalY }));
-    localStorage.setItem('chatWindowSize', JSON.stringify(windowSize));
-  }, [handleMouseMove, handleTouchMove, onPositionChange, position, windowSize, SNAP_THRESHOLD]);
-  
   // Resize handlers
   const handleResizeStart = useCallback((e: React.MouseEvent | React.TouchEvent, corner: string) => {
     e.preventDefault();
