@@ -981,3 +981,273 @@ export function duplicatePresetMultiple(
   
   return result;
 }
+
+
+// ============================================
+// CUSTOM CATEGORIES MANAGEMENT
+// ============================================
+
+/**
+ * Rename a custom category
+ */
+export function renameCustomCategory(
+  oldName: string,
+  newName: string,
+  presets: QuickPreset[]
+): { categories: string[]; presets: QuickPreset[] } {
+  // Update the category name in storage
+  const custom = loadCustomCategories();
+  const index = custom.indexOf(oldName);
+  if (index !== -1) {
+    custom[index] = newName;
+    saveCustomCategories(custom);
+  }
+  
+  // Update all presets with the old category name
+  const updatedPresets = presets.map(preset => {
+    if (preset.category === oldName) {
+      return { ...preset, category: newName };
+    }
+    return preset;
+  });
+  
+  return {
+    categories: getAllCategories(),
+    presets: updatedPresets,
+  };
+}
+
+/**
+ * Check if a category is a default category
+ */
+export function isDefaultCategory(category: string): boolean {
+  return DEFAULT_CATEGORIES.includes(category as any);
+}
+
+/**
+ * Get category statistics
+ */
+export function getCategoryStats(presets: QuickPreset[]): Record<string, number> {
+  const stats: Record<string, number> = {
+    'All': presets.length,
+    'Uncategorized': 0,
+  };
+  
+  DEFAULT_CATEGORIES.forEach(cat => {
+    stats[cat] = 0;
+  });
+  
+  const customCategories = loadCustomCategories();
+  customCategories.forEach(cat => {
+    stats[cat] = 0;
+  });
+  
+  presets.forEach(preset => {
+    const category = preset.category || 'Uncategorized';
+    stats[category] = (stats[category] || 0) + 1;
+  });
+  
+  return stats;
+}
+
+// ============================================
+// BULK OPERATIONS
+// ============================================
+
+/**
+ * Delete multiple presets at once
+ */
+export function bulkDeletePresets(
+  presets: QuickPreset[],
+  presetIds: string[]
+): QuickPreset[] {
+  return presets.filter(preset => !presetIds.includes(preset.id));
+}
+
+/**
+ * Set category for multiple presets at once
+ */
+export function bulkSetCategory(
+  presets: QuickPreset[],
+  presetIds: string[],
+  category: string | undefined
+): QuickPreset[] {
+  return presets.map(preset => {
+    if (!presetIds.includes(preset.id)) return preset;
+    return { ...preset, category };
+  });
+}
+
+/**
+ * Toggle favorite for multiple presets at once
+ */
+export function bulkToggleFavorite(
+  presets: QuickPreset[],
+  presetIds: string[],
+  isFavorite: boolean
+): QuickPreset[] {
+  return presets.map(preset => {
+    if (!presetIds.includes(preset.id)) return preset;
+    return { ...preset, isFavorite };
+  });
+}
+
+/**
+ * Duplicate multiple presets at once
+ */
+export function bulkDuplicatePresets(
+  presets: QuickPreset[],
+  presetIds: string[]
+): QuickPreset[] {
+  let result = [...presets];
+  presetIds.forEach(id => {
+    result = duplicatePreset(result, id);
+  });
+  return result;
+}
+
+/**
+ * Export selected presets to JSON
+ */
+export function bulkExportPresets(
+  presets: QuickPreset[],
+  presetIds: string[]
+): string {
+  const selectedPresets = presets.filter(p => presetIds.includes(p.id));
+  return exportPresets(selectedPresets);
+}
+
+// ============================================
+// PRESET STATISTICS DASHBOARD
+// ============================================
+
+export interface PresetStatistics {
+  totalPresets: number;
+  totalUsage: number;
+  favoriteCount: number;
+  categoryCounts: Record<string, number>;
+  topUsedPresets: Array<{ preset: QuickPreset; usageCount: number }>;
+  recentlyUsedPresets: Array<{ preset: QuickPreset; lastUsedAt: string }>;
+  modelPopularity: Record<string, number>;
+  averageModelsPerPreset: number;
+  presetsCreatedThisWeek: number;
+  presetsCreatedThisMonth: number;
+  usageTrend: Array<{ date: string; count: number }>;
+}
+
+/**
+ * Get comprehensive preset statistics
+ */
+export function getPresetStatistics(
+  presets: QuickPreset[],
+  usageStats: PresetUsageStats
+): PresetStatistics {
+  const now = new Date();
+  const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  
+  // Calculate total usage
+  let totalUsage = 0;
+  Object.values(usageStats).forEach(stat => {
+    totalUsage += stat.usageCount || 0;
+  });
+  
+  // Count favorites
+  const favoriteCount = presets.filter(p => p.isFavorite).length;
+  
+  // Category counts
+  const categoryCounts = getCategoryStats(presets);
+  
+  // Top used presets
+  const topUsedPresets = presets
+    .map(preset => ({
+      preset,
+      usageCount: usageStats[preset.id]?.usageCount || 0,
+    }))
+    .filter(item => item.usageCount > 0)
+    .sort((a, b) => b.usageCount - a.usageCount)
+    .slice(0, 5);
+  
+  // Recently used presets
+  const recentlyUsedPresets = presets
+    .filter(p => usageStats[p.id]?.lastUsedAt)
+    .map(preset => ({
+      preset,
+      lastUsedAt: usageStats[preset.id].lastUsedAt!,
+    }))
+    .sort((a, b) => new Date(b.lastUsedAt).getTime() - new Date(a.lastUsedAt).getTime())
+    .slice(0, 5);
+  
+  // Model popularity
+  const modelPopularity: Record<string, number> = {};
+  presets.forEach(preset => {
+    preset.models.forEach(model => {
+      modelPopularity[model] = (modelPopularity[model] || 0) + 1;
+    });
+  });
+  
+  // Average models per preset
+  const totalModels = presets.reduce((sum, p) => sum + p.models.length, 0);
+  const averageModelsPerPreset = presets.length > 0 ? totalModels / presets.length : 0;
+  
+  // Presets created this week/month
+  const presetsCreatedThisWeek = presets.filter(p => {
+    if (!p.createdAt) return false;
+    return new Date(p.createdAt) >= oneWeekAgo;
+  }).length;
+  
+  const presetsCreatedThisMonth = presets.filter(p => {
+    if (!p.createdAt) return false;
+    return new Date(p.createdAt) >= oneMonthAgo;
+  }).length;
+  
+  // Usage trend (last 7 days)
+  const usageTrend: Array<{ date: string; count: number }> = [];
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toISOString().split('T')[0];
+    
+    // Count usage for this date
+    let count = 0;
+    Object.values(usageStats).forEach(stat => {
+      if (stat.lastUsedAt?.startsWith(dateStr)) {
+        count += 1;
+      }
+    });
+    
+    usageTrend.push({ date: dateStr, count });
+  }
+  
+  return {
+    totalPresets: presets.length,
+    totalUsage,
+    favoriteCount,
+    categoryCounts,
+    topUsedPresets,
+    recentlyUsedPresets,
+    modelPopularity,
+    averageModelsPerPreset: Math.round(averageModelsPerPreset * 10) / 10,
+    presetsCreatedThisWeek,
+    presetsCreatedThisMonth,
+    usageTrend,
+  };
+}
+
+/**
+ * Get usage summary text
+ */
+export function getUsageSummary(stats: PresetStatistics): string {
+  const lines: string[] = [];
+  
+  lines.push(`Total Presets: ${stats.totalPresets}`);
+  lines.push(`Total Usage: ${stats.totalUsage} times`);
+  lines.push(`Favorites: ${stats.favoriteCount}`);
+  lines.push(`Avg Models/Preset: ${stats.averageModelsPerPreset}`);
+  
+  if (stats.presetsCreatedThisWeek > 0) {
+    lines.push(`Created This Week: ${stats.presetsCreatedThisWeek}`);
+  }
+  
+  return lines.join(' | ');
+}

@@ -148,3 +148,10 @@
 - [x] Add preset search - Search bar to filter presets by name or description
 - [x] Add preset categories/tags - Organize presets into custom categories
 - [x] Add preset duplication - Duplicate button to copy existing presets
+
+
+## Bug Fixes & New Features (Round 4)
+- [x] Fix horizontal floating - Chat window only floats vertically, not horizontally
+- [x] Add custom categories - Allow users to create their own category names
+- [x] Add bulk operations - Select multiple presets to delete, duplicate, or change category
+- [x] Add preset statistics dashboard - Show overview of presets, usage trends, category distribution

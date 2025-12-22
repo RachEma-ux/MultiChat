@@ -390,7 +390,7 @@ export default function EmptyPage() {
       )}
 
       {/* Empty Main Content - Background for floating windows */}
-      <div className="flex-1 bg-background relative overflow-hidden">
+      <div className="flex-1 bg-background relative">
         {/* Floating Chat Windows */}
         <AnimatePresence>
           {activeWindows.map((window) => (

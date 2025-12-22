@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, GripVertical, Plus, Pencil, Trash2, Check, Star, Download, Upload, Share2, BarChart2, Layout, History, Search, Tag, Copy, FolderOpen } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, GripVertical, Plus, Pencil, Trash2, Check, Star, Download, Upload, Share2, BarChart2, Layout, History, Search, Tag, Copy, FolderOpen, CheckSquare } from 'lucide-react';
 import { ChatFooter, SavedConversation as SavedConvo } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { PresetsPanel } from './PresetsPanel';
@@ -25,9 +25,12 @@ import { PresetTemplatesModal } from './PresetTemplatesModal';
 import { PresetVersionHistoryModal } from './PresetVersionHistoryModal';
 import { PresetRecommendations } from './PresetRecommendations';
 import { PresetSortDropdown } from './PresetSortDropdown';
+import { PresetStatsDashboard } from './PresetStatsDashboard';
+import { CustomCategoryModal } from './CustomCategoryModal';
+import { BulkOperationsBar } from './BulkOperationsBar';
 import { useKeyboardShortcuts, SHORTCUT_KEYS } from '@/hooks/useKeyboardShortcuts';
 import { AI_PROVIDERS, MODEL_PRESETS } from '@/lib/ai-providers';
-import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset, reorderQuickPresets, toggleFavorite, exportPresets, importPresets, trackPresetUsage, loadUsageStats, generateShareableUrl, checkUrlForSharedPreset, PRESET_TEMPLATES, getTemplateCategories, createPresetFromTemplate, PresetTemplate, PresetSortOption, sortPresets, PresetVersion, restorePresetVersion, getPresetVersionHistory, searchPresets, setPresetCategory, filterByCategory, getAllCategories, addCustomCategory, duplicatePreset, DEFAULT_CATEGORIES } from '@/lib/quick-presets';
+import { QuickPreset, loadQuickPresets, saveQuickPresets, addQuickPresets, updateQuickPreset, removeQuickPreset, reorderQuickPresets, toggleFavorite, exportPresets, importPresets, trackPresetUsage, loadUsageStats, generateShareableUrl, checkUrlForSharedPreset, PRESET_TEMPLATES, getTemplateCategories, createPresetFromTemplate, PresetTemplate, PresetSortOption, sortPresets, PresetVersion, restorePresetVersion, getPresetVersionHistory, searchPresets, setPresetCategory, filterByCategory, getAllCategories, addCustomCategory, duplicatePreset, DEFAULT_CATEGORIES, PresetUsageStats } from '@/lib/quick-presets';
 import { toast } from 'sonner';
 
 interface Attachment {
@@ -107,6 +110,10 @@ export function FloatingChatWindow({
   const [presetSearchQuery, setPresetSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [categories, setCategories] = useState<string[]>(() => getAllCategories());
+  const [showStatsDashboard, setShowStatsDashboard] = useState(false);
+  const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
+  const [bulkMode, setBulkMode] = useState(false);
+  const [selectedPresetIds, setSelectedPresetIds] = useState<Set<string>>(new Set());
   const [windowSize, setWindowSize] = useState({ width: 400, height: 500 });
   const [isResizing, setIsResizing] = useState(false);
   const [snapIndicator, setSnapIndicator] = useState<'left' | 'right' | 'top' | null>(null);
@@ -132,7 +139,7 @@ export function FloatingChatWindow({
     
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-    document.addEventListener('touchmove', handleTouchMove);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', handleMouseUp);
   }, [isPinned, isMaximized, position]);
 
@@ -146,6 +153,7 @@ export function FloatingChatWindow({
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!isDragging.current) return;
+    e.preventDefault(); // Prevent scrolling while dragging
     
     const touch = e.touches[0];
     const newX = Math.max(0, Math.min(window.innerWidth - 400, touch.clientX - dragStart.current.x));
@@ -707,7 +715,8 @@ export function FloatingChatWindow({
         }}
       >
         <div 
-          className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0 mr-4 touch-none select-none"
+          className="drag-handle flex items-center gap-2 cursor-move flex-1 min-w-0 mr-4 select-none"
+          style={{ touchAction: 'none' }}
           onMouseDown={(e) => {
             e.preventDefault();
             handleMouseDown(e);
@@ -933,6 +942,41 @@ export function FloatingChatWindow({
                     >
                       <Download className="h-3 w-3" />
                     </Button>
+                    {/* Stats button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowStatsDashboard(true)}
+                      className="h-7 w-7 p-0"
+                      title="View statistics"
+                    >
+                      <BarChart2 className="h-3 w-3" />
+                    </Button>
+                    {/* Bulk mode button */}
+                    <Button
+                      variant={bulkMode ? "secondary" : "ghost"}
+                      size="sm"
+                      onClick={() => {
+                        setBulkMode(!bulkMode);
+                        if (bulkMode) {
+                          setSelectedPresetIds(new Set());
+                        }
+                      }}
+                      className="h-7 w-7 p-0"
+                      title={bulkMode ? "Exit bulk mode" : "Bulk operations"}
+                    >
+                      <CheckSquare className="h-3 w-3" />
+                    </Button>
+                    {/* Manage categories button */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCustomCategoryModal(true)}
+                      className="h-7 w-7 p-0"
+                      title="Manage categories"
+                    >
+                      <FolderOpen className="h-3 w-3" />
+                    </Button>
                     {/* New button */}
                     <Button
                       variant="ghost"
@@ -978,8 +1022,24 @@ export function FloatingChatWindow({
                     </Button>
                   ))}
                 </div>
+                {/* Bulk operations bar */}
+                {bulkMode && (
+                  <BulkOperationsBar
+                    selectedIds={selectedPresetIds}
+                    presets={quickPresets}
+                    onSelectionChange={setSelectedPresetIds}
+                    onPresetsChange={(updated) => {
+                      setQuickPresets(updated);
+                      saveQuickPresets(updated);
+                    }}
+                    onExitBulkMode={() => {
+                      setBulkMode(false);
+                      setSelectedPresetIds(new Set());
+                    }}
+                  />
+                )}
                 {/* Recommendations section */}
-                {showRecommendations && quickPresets.length > 0 && !presetSearchQuery && !selectedCategory && (
+                {showRecommendations && quickPresets.length > 0 && !presetSearchQuery && !selectedCategory && !bulkMode && (
                   <PresetRecommendations
                     presets={quickPresets}
                     usageStats={usageStats}
@@ -1006,16 +1066,19 @@ export function FloatingChatWindow({
                   })().map((preset, index) => (
                     <div
                       key={preset.id}
-                      draggable
+                      draggable={!bulkMode}
                       onDragStart={(e) => {
+                        if (bulkMode) return;
                         setDraggedPresetIndex(index);
                         e.dataTransfer.effectAllowed = 'move';
                       }}
                       onDragOver={(e) => {
+                        if (bulkMode) return;
                         e.preventDefault();
                         e.dataTransfer.dropEffect = 'move';
                       }}
                       onDrop={(e) => {
+                        if (bulkMode) return;
                         e.preventDefault();
                         if (draggedPresetIndex !== null && draggedPresetIndex !== index) {
                           const reordered = reorderQuickPresets(quickPresets, draggedPresetIndex, index);
@@ -1027,10 +1090,29 @@ export function FloatingChatWindow({
                       onDragEnd={() => setDraggedPresetIndex(null)}
                       className={`flex items-center gap-1 ${draggedPresetIndex === index ? 'opacity-50' : ''}`}
                     >
+                      {/* Bulk selection checkbox */}
+                      {bulkMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedPresetIds.has(preset.id)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedPresetIds);
+                            if (e.target.checked) {
+                              newSet.add(preset.id);
+                            } else {
+                              newSet.delete(preset.id);
+                            }
+                            setSelectedPresetIds(newSet);
+                          }}
+                          className="h-4 w-4 rounded border-border"
+                        />
+                      )}
                       {/* Drag handle */}
-                      <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
-                        <GripVertical className="h-3 w-3" />
-                      </div>
+                      {!bulkMode && (
+                        <div className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground">
+                          <GripVertical className="h-3 w-3" />
+                        </div>
+                      )}
                       
                       {/* Editable preset name or button */}
                       {editingQuickPresetId === preset.id ? (
@@ -1454,6 +1536,32 @@ export function FloatingChatWindow({
         toast.success(`Restored preset to version from ${new Date(version.timestamp).toLocaleString()}`);
       }}
     />
+    
+    {/* Preset Statistics Dashboard */}
+    {showStatsDashboard && (
+      <PresetStatsDashboard
+        presets={quickPresets}
+        usageStats={usageStats}
+        onClose={() => setShowStatsDashboard(false)}
+        onSelectPreset={(presetId) => {
+          const preset = quickPresets.find(p => p.id === presetId);
+          if (preset) {
+            applyPreset({ id: preset.id, name: preset.name, models: preset.models });
+            setShowStatsDashboard(false);
+          }
+        }}
+      />
+    )}
+    
+    {/* Custom Category Modal */}
+    {showCustomCategoryModal && (
+      <CustomCategoryModal
+        onClose={() => setShowCustomCategoryModal(false)}
+        onCategoriesChange={() => {
+          setCategories(getAllCategories());
+        }}
+      />
+    )}
     </>
   );
 }

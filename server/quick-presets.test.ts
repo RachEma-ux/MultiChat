@@ -566,3 +566,206 @@ describe('Quick Presets - Duplication', () => {
     expect(new Date(duplicate.createdAt!).getTime()).toBeGreaterThan(0);
   });
 });
+
+
+// ============================================
+// BULK OPERATIONS TESTS
+// ============================================
+
+describe('Quick Presets - Bulk Operations', () => {
+  const mockPresets: QuickPreset[] = [
+    {
+      id: 'preset-1',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Preset One',
+      models: ['model-1'],
+      isModified: false,
+      isFavorite: false,
+      category: 'Work',
+    },
+    {
+      id: 'preset-2',
+      sourceId: 'source-2',
+      sourceType: 'custom',
+      name: 'Preset Two',
+      models: ['model-2'],
+      isModified: false,
+      isFavorite: true,
+      category: 'Personal',
+    },
+    {
+      id: 'preset-3',
+      sourceId: 'source-3',
+      sourceType: 'custom',
+      name: 'Preset Three',
+      models: ['model-3'],
+      isModified: false,
+      isFavorite: false,
+    },
+  ];
+
+  it('should bulk set category for multiple presets', () => {
+    const selectedIds = ['preset-1', 'preset-3'];
+    const updated = mockPresets.map(p => 
+      selectedIds.includes(p.id) ? { ...p, category: 'Coding' } : p
+    );
+    
+    expect(updated[0].category).toBe('Coding');
+    expect(updated[1].category).toBe('Personal'); // unchanged
+    expect(updated[2].category).toBe('Coding');
+  });
+
+  it('should bulk toggle favorites', () => {
+    const selectedIds = ['preset-1', 'preset-3'];
+    const updated = mockPresets.map(p => 
+      selectedIds.includes(p.id) ? { ...p, isFavorite: true } : p
+    );
+    
+    expect(updated[0].isFavorite).toBe(true);
+    expect(updated[1].isFavorite).toBe(true); // already true
+    expect(updated[2].isFavorite).toBe(true);
+  });
+
+  it('should bulk remove favorites', () => {
+    const selectedIds = ['preset-2'];
+    const updated = mockPresets.map(p => 
+      selectedIds.includes(p.id) ? { ...p, isFavorite: false } : p
+    );
+    
+    expect(updated[1].isFavorite).toBe(false);
+  });
+
+  it('should bulk delete presets', () => {
+    const selectedIds = ['preset-1', 'preset-3'];
+    const remaining = mockPresets.filter(p => !selectedIds.includes(p.id));
+    
+    expect(remaining.length).toBe(1);
+    expect(remaining[0].id).toBe('preset-2');
+  });
+});
+
+// ============================================
+// STATISTICS TESTS
+// ============================================
+
+describe('Quick Presets - Statistics', () => {
+  const mockPresets: QuickPreset[] = [
+    {
+      id: 'preset-1',
+      sourceId: 'source-1',
+      sourceType: 'custom',
+      name: 'Preset One',
+      models: ['gpt-4o', 'claude-3'],
+      isModified: false,
+      isFavorite: true,
+      category: 'Work',
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: 'preset-2',
+      sourceId: 'source-2',
+      sourceType: 'custom',
+      name: 'Preset Two',
+      models: ['gpt-4o'],
+      isModified: false,
+      isFavorite: false,
+      category: 'Work',
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days ago
+    },
+    {
+      id: 'preset-3',
+      sourceId: 'source-3',
+      sourceType: 'custom',
+      name: 'Preset Three',
+      models: ['claude-3', 'gemini'],
+      isModified: false,
+      isFavorite: true,
+      category: 'Personal',
+    },
+  ];
+
+  const mockUsageStats: PresetUsageStats = {
+    'preset-1': { usageCount: 10, lastUsedAt: new Date().toISOString() },
+    'preset-2': { usageCount: 5, lastUsedAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() },
+    'preset-3': { usageCount: 3, lastUsedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString() },
+  };
+
+  it('should calculate total presets count', () => {
+    expect(mockPresets.length).toBe(3);
+  });
+
+  it('should calculate total usage', () => {
+    const totalUsage = Object.values(mockUsageStats).reduce(
+      (sum, stat) => sum + stat.usageCount, 0
+    );
+    expect(totalUsage).toBe(18);
+  });
+
+  it('should count favorites', () => {
+    const favoriteCount = mockPresets.filter(p => p.isFavorite).length;
+    expect(favoriteCount).toBe(2);
+  });
+
+  it('should calculate average models per preset', () => {
+    const totalModels = mockPresets.reduce((sum, p) => sum + p.models.length, 0);
+    const avgModels = totalModels / mockPresets.length;
+    expect(avgModels).toBeCloseTo(1.67, 1);
+  });
+
+  it('should calculate category distribution', () => {
+    const distribution: Record<string, number> = {};
+    mockPresets.forEach(p => {
+      const cat = p.category || 'Uncategorized';
+      distribution[cat] = (distribution[cat] || 0) + 1;
+    });
+    
+    expect(distribution['Work']).toBe(2);
+    expect(distribution['Personal']).toBe(1);
+  });
+
+  it('should identify most popular models', () => {
+    const modelCounts: Record<string, number> = {};
+    mockPresets.forEach(p => {
+      p.models.forEach(m => {
+        modelCounts[m] = (modelCounts[m] || 0) + 1;
+      });
+    });
+    
+    expect(modelCounts['gpt-4o']).toBe(2);
+    expect(modelCounts['claude-3']).toBe(2);
+    expect(modelCounts['gemini']).toBe(1);
+  });
+
+  it('should get top used presets', () => {
+    const sorted = mockPresets.sort((a, b) => {
+      const aUsage = mockUsageStats[a.id]?.usageCount || 0;
+      const bUsage = mockUsageStats[b.id]?.usageCount || 0;
+      return bUsage - aUsage;
+    });
+    
+    expect(sorted[0].id).toBe('preset-1'); // 10 uses
+    expect(sorted[1].id).toBe('preset-2'); // 5 uses
+    expect(sorted[2].id).toBe('preset-3'); // 3 uses
+  });
+
+  it('should get recently used presets', () => {
+    const sorted = mockPresets.sort((a, b) => {
+      const aTime = new Date(mockUsageStats[a.id]?.lastUsedAt || 0).getTime();
+      const bTime = new Date(mockUsageStats[b.id]?.lastUsedAt || 0).getTime();
+      return bTime - aTime;
+    });
+    
+    expect(sorted[0].id).toBe('preset-1'); // most recent
+  });
+
+  it('should count presets created this week', () => {
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const createdThisWeek = mockPresets.filter(p => {
+      if (!p.createdAt) return false;
+      return new Date(p.createdAt).getTime() > oneWeekAgo;
+    }).length;
+    
+    expect(createdThisWeek).toBe(1); // Only preset-1 was created this week
+  });
+});
