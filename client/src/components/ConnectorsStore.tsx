@@ -197,7 +197,7 @@ export function ConnectorsStore({ isOpen, onClose }: ConnectorsStoreProps) {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[1200] flex flex-col justify-end pointer-events-none">
+    <div className="fixed inset-0 z-[400] flex flex-col justify-end pointer-events-none">
       {/* Backdrop */}
       <div 
         className={cn(

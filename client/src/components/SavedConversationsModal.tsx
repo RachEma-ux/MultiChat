@@ -195,7 +195,7 @@ export function SavedConversationsModal({
 
   return (
     <div 
-      className="fixed inset-0 z-[1100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[400] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       onClick={(e) => {
         // Close when clicking the backdrop (outside the modal)
         if (e.target === e.currentTarget) {

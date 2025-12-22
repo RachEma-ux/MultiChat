@@ -53,7 +53,7 @@ export function PresetStatsDashboard({
   }, [stats.categoryCounts]);
   
   return (
-    <div className="fixed inset-0 bg-black/50 z-[9999] flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/50 z-[400] flex items-center justify-center p-4">
       <div className="bg-background border border-border rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-card">

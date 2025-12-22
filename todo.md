@@ -179,3 +179,4 @@
 - [x] Fix dialog z-index (opens behind FloatingChatWindow) - increased z-index to 100
 - [x] Fix freezing icons (Sort dropdown and Templates button) - replaced Radix components with custom ones
 - [x] Fix floating window drag behavior (snaps back to left) - removed left edge snapping
+- [x] Implement centralized z-index management system to permanently fix layering issues

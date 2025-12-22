@@ -10,10 +10,10 @@ export function SettingsMenu({ onClose, onPresetsManagement }: SettingsMenuProps
   return (
     <>
       <div 
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-[299]"
         onClick={onClose}
       />
-      <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+      <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-[300] border border-border overflow-hidden">
         <div className="px-4 py-3 border-b border-border">
           <h3 className="text-sm font-semibold">Settings</h3>
         </div>

@@ -890,7 +890,7 @@ export function FloatingChatWindow({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col z-[900] ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
+        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col z-[200] ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
         style={windowStyle}
       >
         {/* Header */}

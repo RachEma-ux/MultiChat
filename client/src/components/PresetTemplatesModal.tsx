@@ -74,7 +74,7 @@ export function PresetTemplatesModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50" onClick={handleClose}>
+    <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/50" onClick={handleClose}>
       <div 
         className="bg-background border border-border rounded-lg shadow-lg w-full max-w-lg max-h-[80vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
