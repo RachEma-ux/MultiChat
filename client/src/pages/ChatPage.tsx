@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -12,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
 import { PresetsManagementModal } from '@/components/PresetsManagementModal';
+import { ModeMenu } from '@/components/ModeMenu';
 import { 
   Send, Plus, X, Menu, Save, Download, Star, ThumbsUp, ThumbsDown, 
   MessageSquare, Grid, List, BarChart, Zap, GitCompare, Eye, EyeOff, Trash2, Paperclip, Image as ImageIcon, Sparkles, ChevronRight, Settings, Archive, Edit
@@ -170,7 +170,6 @@ interface SavedConversation {
 }
 
 export default function ChatPage() {
-  const [, setLocation] = useLocation();
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [selectedModels, setSelectedModels] = useState<string[]>([]);
@@ -190,8 +189,7 @@ export default function ChatPage() {
   const [showQuickMenu, setShowQuickMenu] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [archivedConversations, setArchivedConversations] = useState<SavedConversation[]>([]);
-  const [currentMode, setCurrentMode] = useState<'Agents' | 'Chat' | 'Conversation' | 'Empty'>('Chat');
-  const [showModeMenu, setShowModeMenu] = useState(false);
+
   const [showHeaderMenu, setShowHeaderMenu] = useState(false);
   const [showPlusMenu, setShowPlusMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
@@ -803,65 +801,7 @@ export default function ChatPage() {
               <BarChart className="h-5 w-5" />
             </Button>
             {/* Mode Button with Dropdown */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowModeMenu(!showModeMenu)}
-                title="Mode"
-                className="text-xs"
-              >
-                Mode
-              </Button>
-              {showModeMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0 z-40"
-                    onClick={() => setShowModeMenu(false)}
-                  />
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                    <button
-                      onClick={() => {
-                        setShowModeMenu(false);
-                        toast.info('Agents mode coming soon');
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                    >
-                      Agents
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowModeMenu(false);
-                        toast.info('Already in Chat mode');
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors bg-accent"
-                    >
-                      Chat
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowModeMenu(false);
-                        setLocation('/conversation');
-                        toast.info('Switched to Conversation mode');
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                    >
-                      Conversation
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowModeMenu(false);
-                        setLocation('/');
-                        toast.info('Switched to Empty mode');
-                      }}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                    >
-                      Empty
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            <ModeMenu currentMode="chat" />
             <Button
               variant="ghost"
               size="icon"

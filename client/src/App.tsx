@@ -8,14 +8,15 @@ import Home from "./pages/Home";
 import ChatPage from "./pages/ChatPage";
 import ConversationPage from "./pages/ConversationPage";
 import EmptyPage from "./pages/EmptyPage";
+import AgentsPage from "./pages/AgentsPage";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={EmptyPage} />
       <Route path={"/chat"} component={ChatPage} />
       <Route path={"/conversation"} component={ConversationPage} />
+      <Route path={"/agents"} component={AgentsPage} />
       <Route path={"/home"} component={Home} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
@@ -23,11 +24,6 @@ function Router() {
     </Switch>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (

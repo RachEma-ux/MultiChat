@@ -186,3 +186,14 @@
 ## Empty Mode Fix
 - [x] Fix Mode menu navigation - Empty mode now properly routes to `/` (EmptyPage)
 - [x] Chat mode properly shows current page indicator
+
+## Mode Navigation Fix (Round 2)
+- [ ] Fix navigation from ChatPage back to EmptyPage - setLocation('/') not working
+- [ ] Ensure all Mode menu options navigate correctly across all pages
+
+## Independent Mode Pages
+- [x] Create AgentsPage component at /agents route
+- [x] Create shared ModeMenu component for consistent navigation across all pages
+- [x] Update App.tsx with all mode routes (/empty, /chat, /conversation, /agents)
+- [x] Integrate ModeMenu in EmptyPage, ChatPage, ConversationPage, AgentsPage
+- [x] Update ConversationPage to show "coming soon" message

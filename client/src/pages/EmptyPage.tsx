@@ -4,8 +4,8 @@ import { CollapsibleMenuGroup } from '@/components/CollapsibleMenuGroup';
 import { FloatingChatWindow } from '@/components/FloatingChatWindow';
 import { WindowDock } from '@/components/WindowDock';
 import { WindowLayoutPresets, WindowLayout } from '@/components/WindowLayoutPresets';
+import { ModeMenu } from '@/components/ModeMenu';
 import { Menu, Download, X, Layout, Plus } from 'lucide-react';
-import { useLocation } from 'wouter';
 import { toast } from 'sonner';
 import { AnimatePresence } from 'framer-motion';
 
@@ -23,9 +23,7 @@ const DEFAULT_WINDOW_SIZE = { width: 400, height: 500 };
 const MAX_WINDOWS = 10;
 
 export default function EmptyPage() {
-  const [, setLocation] = useLocation();
   const [showMenu, setShowMenu] = useState(false);
-  const [showModeMenu, setShowModeMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
   const [showLayoutPresets, setShowLayoutPresets] = useState(false);
@@ -172,8 +170,6 @@ export default function EmptyPage() {
 
   const activeWindows = chatWindows.filter(w => !w.isMinimized);
   const minimizedWindows = chatWindows.filter(w => w.isMinimized);
-  const chatModeLabel = chatWindows.length > 0 ? `Add Chat (${chatWindows.length}/${MAX_WINDOWS})` : 'Chat';
-
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
       {/* Header */}
@@ -215,64 +211,7 @@ export default function EmptyPage() {
           )}
 
           {/* Mode Selector */}
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowModeMenu(!showModeMenu)}
-              className="text-xs md:text-sm"
-            >
-              Mode
-            </Button>
-            {showModeMenu && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowModeMenu(false)}
-                />
-                <div className="absolute top-full right-0 mt-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setShowModeMenu(false);
-                      toast.info('Agents mode coming soon');
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                  >
-                    Agents
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowModeMenu(false);
-                      addNewChatWindow();
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                    disabled={chatWindows.length >= MAX_WINDOWS}
-                  >
-                    {chatModeLabel}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowModeMenu(false);
-                      setLocation('/conversation');
-                      toast.info('Switched to Conversation mode');
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors"
-                  >
-                    Conversation
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowModeMenu(false);
-                      toast.info('Already in Empty mode');
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-accent transition-colors bg-accent"
-                  >
-                    Empty
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+          <ModeMenu currentMode="empty" />
 
           <Button
             variant="ghost"

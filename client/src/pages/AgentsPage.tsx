@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { ModeMenu } from '@/components/ModeMenu';
-import { Menu, X, MessageSquare } from 'lucide-react';
+import { Menu, X, Bot, Sparkles } from 'lucide-react';
 
-export default function ConversationPage() {
+export default function AgentsPage() {
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -18,11 +18,11 @@ export default function ConversationPage() {
           >
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-base md:text-lg font-semibold">Conversation</h1>
+          <h1 className="text-base md:text-lg font-semibold">Agents</h1>
         </div>
         
         <div className="flex items-center gap-1 md:gap-2">
-          <ModeMenu currentMode="conversation" />
+          <ModeMenu currentMode="agents" />
         </div>
       </div>
 
@@ -45,7 +45,7 @@ export default function ConversationPage() {
               </Button>
             </div>
             <div className="p-4">
-              <p className="text-sm text-muted-foreground">Conversation menu coming soon...</p>
+              <p className="text-sm text-muted-foreground">Agents menu coming soon...</p>
             </div>
           </div>
         </>
@@ -53,11 +53,14 @@ export default function ConversationPage() {
 
       {/* Main Content - Coming Soon */}
       <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
-        <h2 className="text-2xl font-bold mb-2">Conversation Mode</h2>
+        <div className="flex items-center gap-3 mb-4">
+          <Bot className="h-16 w-16 text-muted-foreground" />
+          <Sparkles className="h-8 w-8 text-yellow-500" />
+        </div>
+        <h2 className="text-2xl font-bold mb-2">Agents Mode</h2>
         <p className="text-muted-foreground text-center max-w-md">
-          Conversation mode is coming soon! This mode will provide a streamlined 
-          single-thread conversation experience with multiple AI models.
+          AI Agents are coming soon! This mode will allow you to create and manage 
+          autonomous AI agents that can perform complex tasks.
         </p>
       </div>
     </div>
