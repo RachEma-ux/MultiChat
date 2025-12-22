@@ -23,9 +23,12 @@ export function PresetRecommendations({
   onDismiss,
   className = '',
 }: PresetRecommendationsProps) {
+  // Stabilize currentModels reference to prevent unnecessary recalculations
+  const stableCurrentModels = useMemo(() => currentModels, [JSON.stringify(currentModels)]);
+  
   const recommendations = useMemo(() => {
-    return getPresetRecommendations(presets, usageStats, currentModels, 3);
-  }, [presets, usageStats, currentModels]);
+    return getPresetRecommendations(presets, usageStats, stableCurrentModels, 3);
+  }, [presets, usageStats, stableCurrentModels]);
 
   if (recommendations.length === 0) {
     return null;
