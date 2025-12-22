@@ -173,4 +173,3 @@
 - [x] Fix page freeze when Presets panel is opened
 - [x] Investigate infinite loop or heavy re-rendering in PresetsPanel
 - [x] Optimize preset-related components for performance (simplified UI with single action menu per preset)
-- [x] Fix page freeze on mobile devices when opening Presets panel (optimized BulkOperationsBar and PresetRecommendations)
