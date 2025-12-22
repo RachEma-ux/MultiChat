@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, Plus, Pencil, Trash2, Star, Download, Upload, Share2, BarChart2, Layout, Search, Tag, Copy, FolderOpen, CheckSquare } from 'lucide-react';
+import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, Plus, Pencil, Trash2, Star, Download, Upload, Share2, BarChart2, Layout, Search, Tag, Copy, FolderOpen, CheckSquare, MoreHorizontal } from 'lucide-react';
 import { ChatFooter } from '@/components/ChatFooter';
 import { ModelSelector } from './ModelSelector';
 import { SettingsMenu } from './SettingsMenu';
@@ -1151,165 +1151,164 @@ export function FloatingChatWindow({
                 />
               )}
               
-              {/* Preset list */}
+              {/* Preset list - Simplified for better mobile performance */}
               <div className="space-y-1">
-                {filteredPresets.map((preset, index) => (
-                  <div
-                    key={preset.id}
-                    draggable={canDragPresets && !bulkMode}
-                    onDragStart={() => {
-                      if (!canDragPresets || bulkMode) return;
-                      setDraggedPresetIndex(filteredToOriginalIndex.get(index) ?? index);
-                    }}
-                    onDragOver={(e) => {
-                      if (!canDragPresets || bulkMode) return;
-                      e.preventDefault();
-                    }}
-                    onDrop={() => {
-                      if (!canDragPresets || bulkMode || draggedPresetIndex === null) return;
-                      const targetOriginalIndex = filteredToOriginalIndex.get(index) ?? index;
-                      if (draggedPresetIndex !== targetOriginalIndex) {
-                        const reordered = reorderQuickPresets(quickPresets, draggedPresetIndex, targetOriginalIndex);
-                        setQuickPresets(reordered);
-                        saveQuickPresets(reordered);
-                      }
-                      setDraggedPresetIndex(null);
-                    }}
-                    onDragEnd={() => setDraggedPresetIndex(null)}
-                    className={`flex items-center gap-1 ${draggedPresetIndex === (filteredToOriginalIndex.get(index) ?? index) ? 'opacity-50' : ''}`}
-                  >
-                    {bulkMode && (
-                      <input
-                        type="checkbox"
-                        checked={selectedPresetIds.has(preset.id)}
-                        onChange={(e) => {
-                          const newSet = new Set(selectedPresetIds);
-                          if (e.target.checked) newSet.add(preset.id);
-                          else newSet.delete(preset.id);
-                          setSelectedPresetIds(newSet);
-                        }}
-                        className="h-4 w-4 rounded border-border"
-                      />
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => applyPreset({ id: preset.id, name: preset.name, models: preset.models })}
-                      className="flex-1 justify-between text-xs h-8"
-                    >
-                      <span className="flex items-center gap-1 flex-1 text-left truncate">
-                        {preset.isFavorite && <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />}
-                        {preset.name}
-                        {preset.isModified && <span className="text-[8px] text-muted-foreground">(modified)</span>}
-                      </span>
-                      <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium">
-                        {preset.models.length}
-                      </span>
-                    </Button>
-                    
-                    {/* Favorite button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const updated = toggleFavorite(quickPresets, preset.id);
-                        setQuickPresets(updated);
-                        saveQuickPresets(updated);
+                {filteredPresets.map((preset, index) => {
+                  const originalIndex = filteredToOriginalIndex.get(index) ?? index;
+                  const isDragging = draggedPresetIndex === originalIndex;
+                  
+                  return (
+                    <div
+                      key={preset.id}
+                      draggable={canDragPresets && !bulkMode}
+                      onDragStart={() => {
+                        if (!canDragPresets || bulkMode) return;
+                        setDraggedPresetIndex(originalIndex);
                       }}
-                      className={`h-8 w-8 p-0 ${preset.isFavorite ? 'text-yellow-500' : ''}`}
-                      title={preset.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                    >
-                      <Star className={`h-3 w-3 ${preset.isFavorite ? 'fill-current' : ''}`} />
-                    </Button>
-                    
-                    {/* Edit button */}
-                    <Button variant="ghost" size="sm" onClick={() => handleEditQuickPreset(preset.id)} className="h-8 w-8 p-0" title="Edit preset">
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    
-                    {/* Duplicate button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const updated = duplicatePreset(quickPresets, preset.id);
-                        setQuickPresets(updated);
-                        saveQuickPresets(updated);
-                        toast.success('Preset duplicated');
+                      onDragOver={(e) => {
+                        if (!canDragPresets || bulkMode) return;
+                        e.preventDefault();
                       }}
-                      className="h-8 w-8 p-0"
-                      title="Duplicate preset"
+                      onDrop={() => {
+                        if (!canDragPresets || bulkMode || draggedPresetIndex === null) return;
+                        if (draggedPresetIndex !== originalIndex) {
+                          const reordered = reorderQuickPresets(quickPresets, draggedPresetIndex, originalIndex);
+                          setQuickPresets(reordered);
+                          saveQuickPresets(reordered);
+                        }
+                        setDraggedPresetIndex(null);
+                      }}
+                      onDragEnd={() => setDraggedPresetIndex(null)}
+                      className={`flex items-center gap-1 ${isDragging ? 'opacity-50' : ''}`}
                     >
-                      <Copy className="h-3 w-3" />
-                    </Button>
-                    
-                    {/* Category dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className={`h-8 w-8 p-0 ${preset.category ? 'text-primary' : ''}`}
-                          title={preset.category ? `Category: ${preset.category}` : 'Set category'}
-                        >
-                          <Tag className="h-3 w-3" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-40">
-                        <DropdownMenuLabel>Set Category</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => {
-                            const updated = setPresetCategory(quickPresets, preset.id, undefined);
-                            setQuickPresets(updated);
-                            saveQuickPresets(updated);
+                      {bulkMode && (
+                        <input
+                          type="checkbox"
+                          checked={selectedPresetIds.has(preset.id)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedPresetIds);
+                            if (e.target.checked) newSet.add(preset.id);
+                            else newSet.delete(preset.id);
+                            setSelectedPresetIds(newSet);
                           }}
-                        >
-                          <span className={!preset.category ? 'font-medium' : ''}>None</span>
-                        </DropdownMenuItem>
-                        {categories.map((cat) => (
+                          className="h-4 w-4 rounded border-border shrink-0"
+                        />
+                      )}
+                      
+                      {/* Main preset button */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => applyPreset({ id: preset.id, name: preset.name, models: preset.models })}
+                        className="flex-1 justify-between text-xs h-8 min-w-0"
+                      >
+                        <span className="flex items-center gap-1 flex-1 text-left truncate min-w-0">
+                          {preset.isFavorite && <Star className="h-3 w-3 fill-yellow-500 text-yellow-500 shrink-0" />}
+                          <span className="truncate">{preset.name}</span>
+                          {preset.isModified && <span className="text-[8px] text-muted-foreground shrink-0">(modified)</span>}
+                        </span>
+                        <span className="ml-2 px-2 py-0.5 bg-primary/10 text-primary rounded-full text-[10px] font-medium shrink-0">
+                          {preset.models.length}
+                        </span>
+                      </Button>
+                      
+                      {/* Single action menu for all preset operations - reduces DOM complexity */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 shrink-0"
+                            title="Actions"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
                           <DropdownMenuItem
-                            key={cat}
                             onClick={() => {
-                              const updated = setPresetCategory(quickPresets, preset.id, cat);
+                              const updated = toggleFavorite(quickPresets, preset.id);
                               setQuickPresets(updated);
                               saveQuickPresets(updated);
-                              toast.success(`Set category to "${cat}"`);
                             }}
                           >
-                            <span className={preset.category === cat ? 'font-medium' : ''}>{cat}</span>
+                            <Star className={`h-4 w-4 mr-2 ${preset.isFavorite ? 'fill-yellow-500 text-yellow-500' : ''}`} />
+                            {preset.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                           </DropdownMenuItem>
-                        ))}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    
-                    {/* Share button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        const shareUrl = generateShareableUrl(preset);
-                        navigator.clipboard.writeText(shareUrl);
-                        toast.success('Share link copied to clipboard!');
-                      }}
-                      className="h-8 w-8 p-0"
-                      title="Copy share link"
-                    >
-                      <Share2 className="h-3 w-3" />
-                    </Button>
-                    
-                    {/* Remove button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRemoveQuickPreset(preset.id)}
-                      className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-                      title="Remove from Quick Presets"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
+                          
+                          <DropdownMenuItem onClick={() => handleEditQuickPreset(preset.id)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Edit preset
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const updated = duplicatePreset(quickPresets, preset.id);
+                              setQuickPresets(updated);
+                              saveQuickPresets(updated);
+                              toast.success('Preset duplicated');
+                            }}
+                          >
+                            <Copy className="h-4 w-4 mr-2" />
+                            Duplicate
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const shareUrl = generateShareableUrl(preset);
+                              navigator.clipboard.writeText(shareUrl);
+                              toast.success('Share link copied to clipboard!');
+                            }}
+                          >
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Copy share link
+                          </DropdownMenuItem>
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuLabel className="text-xs text-muted-foreground">
+                            <Tag className="h-3 w-3 inline mr-1" />
+                            Category: {preset.category || 'None'}
+                          </DropdownMenuLabel>
+                          
+                          <DropdownMenuItem
+                            onClick={() => {
+                              const updated = setPresetCategory(quickPresets, preset.id, undefined);
+                              setQuickPresets(updated);
+                              saveQuickPresets(updated);
+                            }}
+                          >
+                            <span className={!preset.category ? 'font-medium' : ''}>No Category</span>
+                          </DropdownMenuItem>
+                          
+                          {categories.map((cat) => (
+                            <DropdownMenuItem
+                              key={cat}
+                              onClick={() => {
+                                const updated = setPresetCategory(quickPresets, preset.id, cat);
+                                setQuickPresets(updated);
+                                saveQuickPresets(updated);
+                                toast.success(`Set category to "${cat}"`);
+                              }}
+                            >
+                              <span className={preset.category === cat ? 'font-medium' : ''}>{cat}</span>
+                            </DropdownMenuItem>
+                          ))}
+                          
+                          <DropdownMenuSeparator />
+                          
+                          <DropdownMenuItem
+                            onClick={() => handleRemoveQuickPreset(preset.id)}
+                            className="text-destructive focus:text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Remove preset
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  );
+                })}
                 {quickPresets.length === 0 && (
                   <p className="text-xs text-muted-foreground text-center py-2">
                     No quick presets. Click "+ New" to add presets.
