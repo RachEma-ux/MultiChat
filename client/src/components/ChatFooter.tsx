@@ -175,10 +175,10 @@ export function ChatFooter({
             {showFooterMenu && (
               <>
                 <div 
-                  className="fixed inset-0 z-[299]"
+                  className="fixed inset-0 z-[199]"
                   onClick={() => setShowFooterMenu(false)}
                 />
-                <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-[300] border border-border overflow-hidden">
+                <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-[200] border border-border overflow-hidden">
                   <button
                     onClick={() => {
                       onNewChat?.();
@@ -339,10 +339,10 @@ export function ChatFooter({
             {showSettings && (
               <>
                 <div 
-                  className="fixed inset-0 z-[299]"
+                  className="fixed inset-0 z-[199]"
                   onClick={() => setShowSettings(false)}
                 />
-                <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-[300] border border-border overflow-hidden">
+                <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-[200] border border-border overflow-hidden">
                   <div className="px-4 py-3 border-b border-border">
                     <h3 className="text-sm font-semibold">Settings</h3>
                   </div>

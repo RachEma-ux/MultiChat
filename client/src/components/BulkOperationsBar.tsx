@@ -197,7 +197,7 @@ export function BulkOperationsBar({
             </Button>
             
             {showCategoryMenu && (
-              <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-[300] min-w-[150px] py-1">
+              <div className="absolute top-full left-0 mt-1 bg-popover border border-border rounded-md shadow-lg z-[200] min-w-[150px] py-1">
                 <button
                   className="w-full px-3 py-1.5 text-left text-sm hover:bg-accent transition-colors"
                   onClick={() => handleBulkSetCategory(undefined)}

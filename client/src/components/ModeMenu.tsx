@@ -65,10 +65,10 @@ export function ModeMenu({ currentMode, onAddChatWindow }: ModeMenuProps) {
       {showModeMenu && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[199]"
             onClick={() => setShowModeMenu(false)}
           />
-          <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+          <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-[200] border border-border overflow-hidden">
             {(Object.keys(MODE_CONFIG) as Mode[]).map((mode) => (
               <button
                 key={mode}

@@ -184,10 +184,10 @@ export function ModelSelector({
             {showProviderDropdown && (
               <>
                 <div 
-                  className="fixed inset-0 z-[400]" 
+                  className="fixed inset-0 z-[199]" 
                   onClick={() => setShowProviderDropdown(false)}
                 />
-                <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 z-[200] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                   {providerEntries.map(([key, provider]) => (
                     <button
                       key={key}
@@ -229,10 +229,10 @@ export function ModelSelector({
               {showModelDropdown && (
                 <>
                   <div 
-                    className="fixed inset-0 z-[400]" 
+                    className="fixed inset-0 z-[199]" 
                     onClick={() => setShowModelDropdown(false)}
                   />
-                  <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                  <div className="absolute top-full left-0 right-0 mt-1 z-[200] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                     {currentProvider?.models.map((model) => (
                       <button
                         key={model}

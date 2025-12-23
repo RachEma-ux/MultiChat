@@ -391,10 +391,10 @@ export function PresetsManagementModal({
                       {showCategoryDropdown && (
                         <>
                           <div 
-                            className="fixed inset-0 z-[450]" 
+                            className="fixed inset-0 z-[449]" 
                             onClick={() => setShowCategoryDropdown(false)}
                           />
-                          <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                          <div className="absolute top-full left-0 right-0 mt-1 z-[450] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                             {categories.map((category) => (
                               <button
                                 key={category.id}
@@ -450,10 +450,10 @@ export function PresetsManagementModal({
                           {showProviderDropdown && (
                             <>
                               <div 
-                                className="fixed inset-0 z-[450]" 
+                                className="fixed inset-0 z-[449]" 
                                 onClick={() => setShowProviderDropdown(false)}
                               />
-                              <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                              <div className="absolute top-full left-0 right-0 mt-1 z-[450] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                                 {Object.entries(AI_PROVIDERS).map(([key, provider]) => (
                                   <button
                                     key={key}
@@ -499,10 +499,10 @@ export function PresetsManagementModal({
                             {showModelDropdown && (
                               <>
                                 <div 
-                                  className="fixed inset-0 z-[450]" 
+                                  className="fixed inset-0 z-[449]" 
                                   onClick={() => setShowModelDropdown(false)}
                                 />
-                                <div className="absolute top-full left-0 right-0 mt-1 z-[500] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
+                                <div className="absolute top-full left-0 right-0 mt-1 z-[450] bg-popover text-popover-foreground border border-border rounded-md shadow-lg max-h-[300px] overflow-y-auto">
                                   {AI_PROVIDERS[selectedProvider]?.models.map((model) => (
                                     <button
                                       key={model}

@@ -230,3 +230,8 @@
 - [x] Move "Add New Category" button from bottom to top of Categories Settings modal
 
 - [x] Move Create New Category form to appear above the category list (not below)
+
+## Responsiveness Framework Implementation
+- [x] Create useResponsive hook with viewport detection and breakpoint utilities
+- [x] Audit all components for z-index consistency (dropdowns z-200, modals z-400, toasts z-500)
+- [x] Create CHECKPOINT_CHECKLIST.md for workflow integration
