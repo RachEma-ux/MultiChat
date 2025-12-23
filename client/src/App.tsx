@@ -9,27 +9,39 @@ import ConversationPage from "./pages/ConversationPage";
 import EmptyPage from "./pages/EmptyPage";
 import AgentsPage from "./pages/AgentsPage";
 
+/**
+ * Application Router
+ * Defines all routes for the Multi-AI Chat application.
+ * The catch-all route at the end handles all unmatched paths (404).
+ */
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={EmptyPage} />
-      <Route path={"/chat"} component={EmptyPage} />
-      <Route path={"/conversation"} component={ConversationPage} />
-      <Route path={"/agents"} component={AgentsPage} />
-      <Route path={"/home"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
+      {/* Main application routes */}
+      <Route path="/" component={EmptyPage} />
+      <Route path="/chat" component={EmptyPage} />
+      <Route path="/conversation" component={ConversationPage} />
+      <Route path="/agents" component={AgentsPage} />
+      <Route path="/home" component={Home} />
+      
+      {/* Catch-all route for 404 - handles all unmatched paths */}
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+/**
+ * Root Application Component
+ * Wraps the entire app with necessary providers:
+ * - ErrorBoundary: Catches and displays React errors gracefully
+ * - ThemeProvider: Manages dark/light theme state
+ * - TooltipProvider: Enables tooltips throughout the app
+ * - Toaster: Provides toast notifications
+ */
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="dark"
-      >
+      <ThemeProvider defaultTheme="dark">
         <TooltipProvider>
           <Toaster />
           <Router />
