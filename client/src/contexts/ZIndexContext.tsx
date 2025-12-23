@@ -16,19 +16,19 @@
  * 3. Call bringToFront() when the component is opened or clicked
  */
 
-import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { Z_INDEX, type ZIndexLayer } from '@/lib/z-index';
+import React, { createContext, useContext, useCallback, useRef } from 'react';
+import { Z_VALUES } from '@/lib/z-index';
 
 // Layer categories with their base z-index values
 // Elements within a category will stack above the base
 export type LayerCategory = 'floating' | 'dropdown' | 'popover' | 'modal' | 'toast';
 
 const LAYER_BASE: Record<LayerCategory, number> = {
-  floating: Z_INDEX.FLOATING,   // 200
-  dropdown: Z_INDEX.DROPDOWN,   // 250
-  popover: Z_INDEX.POPOVER,     // 300
-  modal: Z_INDEX.MODAL,         // 400
-  toast: Z_INDEX.TOAST,         // 500
+  floating: Z_VALUES.FLOATING,   // 200
+  dropdown: Z_VALUES.DROPDOWN,   // 250
+  popover: Z_VALUES.POPOVER,     // 300
+  modal: Z_VALUES.MODAL,         // 400
+  toast: Z_VALUES.TOAST,         // 500
 };
 
 // Maximum offset within a category (to prevent overlap with next category)
@@ -44,11 +44,12 @@ interface RegisteredElement {
   id: string;
   category: LayerCategory;
   order: number; // Interaction order (higher = more recent)
+  callback?: (zIndex: number) => void; // Callback to notify of z-index changes
 }
 
 interface ZIndexContextValue {
   // Register a new element and get its initial z-index
-  register: (id: string, category: LayerCategory) => number;
+  register: (id: string, category: LayerCategory, callback?: (zIndex: number) => void) => number;
   
   // Unregister an element when it's closed/unmounted
   unregister: (id: string) => void;
@@ -66,14 +67,11 @@ interface ZIndexContextValue {
 const ZIndexContext = createContext<ZIndexContextValue | null>(null);
 
 export function ZIndexProvider({ children }: { children: React.ReactNode }) {
-  // Track all registered elements
+  // Track all registered elements using a ref (doesn't cause re-renders)
   const elementsRef = useRef<Map<string, RegisteredElement>>(new Map());
   
   // Global counter for interaction order
   const orderCounterRef = useRef(0);
-  
-  // Force re-render when z-index changes
-  const [, forceUpdate] = useState({});
 
   // Calculate z-index for an element based on its order within its category
   const calculateZIndex = useCallback((element: RegisteredElement): number => {
@@ -94,17 +92,28 @@ export function ZIndexProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Register a new element
-  const register = useCallback((id: string, category: LayerCategory): number => {
+  const register = useCallback((id: string, category: LayerCategory, callback?: (zIndex: number) => void): number => {
+    // If already registered, just return current z-index
+    const existing = elementsRef.current.get(id);
+    if (existing) {
+      // Update callback if provided
+      if (callback) {
+        existing.callback = callback;
+        elementsRef.current.set(id, existing);
+      }
+      return calculateZIndex(existing);
+    }
+    
     const order = ++orderCounterRef.current;
     
     const element: RegisteredElement = {
       id,
       category,
       order,
+      callback,
     };
     
     elementsRef.current.set(id, element);
-    forceUpdate({});
     
     return calculateZIndex(element);
   }, [calculateZIndex]);
@@ -112,7 +121,6 @@ export function ZIndexProvider({ children }: { children: React.ReactNode }) {
   // Unregister an element
   const unregister = useCallback((id: string): void => {
     elementsRef.current.delete(id);
-    forceUpdate({});
   }, []);
 
   // Bring an element to the front of its category
@@ -128,9 +136,14 @@ export function ZIndexProvider({ children }: { children: React.ReactNode }) {
     element.order = newOrder;
     elementsRef.current.set(id, element);
     
-    forceUpdate({});
+    const newZ = calculateZIndex(element);
     
-    return calculateZIndex(element);
+    // Notify via callback instead of triggering re-renders
+    if (element.callback) {
+      element.callback(newZ);
+    }
+    
+    return newZ;
   }, [calculateZIndex]);
 
   // Get the current z-index for an element
@@ -147,6 +160,7 @@ export function ZIndexProvider({ children }: { children: React.ReactNode }) {
     return elementsRef.current.has(id);
   }, []);
 
+  // Context value is stable - callbacks are memoized
   const value: ZIndexContextValue = {
     register,
     unregister,
@@ -193,40 +207,25 @@ export function useZIndexContext(): ZIndexContextValue {
  */
 export function useZIndexManager(id: string, category: LayerCategory) {
   const context = useContext(ZIndexContext);
+  const [zIndex, setZIndex] = React.useState(() => LAYER_BASE[category]);
   const registeredRef = useRef(false);
-  const [zIndex, setZIndex] = useState(() => {
-    if (context && !registeredRef.current) {
-      registeredRef.current = true;
-      return context.register(id, category);
-    }
-    return LAYER_BASE[category];
-  });
 
-  // Register on mount, unregister on unmount
+  // Register on mount with callback, unregister on unmount
   React.useEffect(() => {
     if (!context) return;
     
-    if (!registeredRef.current) {
-      const initialZ = context.register(id, category);
-      setZIndex(initialZ);
-      registeredRef.current = true;
-    }
+    // Register with callback to update local state
+    const initialZ = context.register(id, category, (newZ) => {
+      setZIndex(newZ);
+    });
+    setZIndex(initialZ);
+    registeredRef.current = true;
     
     return () => {
       context.unregister(id);
       registeredRef.current = false;
     };
   }, [context, id, category]);
-
-  // Update z-index when it changes
-  React.useEffect(() => {
-    if (!context) return;
-    
-    const newZ = context.getZIndex(id);
-    if (newZ !== zIndex && newZ > 0) {
-      setZIndex(newZ);
-    }
-  });
 
   const bringToFront = useCallback(() => {
     if (!context) return;
@@ -237,7 +236,7 @@ export function useZIndexManager(id: string, category: LayerCategory) {
   return {
     zIndex,
     bringToFront,
-    isRegistered: context?.isRegistered(id) ?? false,
+    isRegistered: registeredRef.current,
   };
 }
 
@@ -247,7 +246,7 @@ export function useZIndexManager(id: string, category: LayerCategory) {
  */
 export function useBringToFront(id: string, category: LayerCategory) {
   const context = useContext(ZIndexContext);
-  const [zIndex, setZIndex] = useState(LAYER_BASE[category]);
+  const [zIndex, setZIndex] = React.useState(LAYER_BASE[category]);
 
   const bringToFront = useCallback(() => {
     if (!context) {

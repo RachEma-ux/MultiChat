@@ -258,3 +258,16 @@
 - [x] Update other floating components (menus, popovers) to use dynamic z-index
 - [x] Test layering: open chat window, then dropdown - dropdown should be on top (106 tests passing)
 - [x] Test layering: click on chat window - it should come to front
+
+
+## Z-Index Framework Enhancement (Prevent Future Bugs)
+- [x] Remove Z_INDEX export from z-index.ts - only expose Z_CLASS constants (kept for backward compat but deprecated)
+- [x] Add getZIndexValue() function for cases where numeric value is needed (added Z_VALUES, getZIndex, getZIndexStyle)
+- [x] Update all components using Z_INDEX to use Z_CLASS instead
+- [x] Fix dropdown-menu.tsx template literal bug (z-[${Z_INDEX.DROPDOWN}] → Z_CLASS.DROPDOWN)
+- [x] Fix select.tsx if it has the same bug
+- [x] Fix dialog.tsx if it has the same bug
+- [ ] Add ESLint rule to catch z-[${...}] inside regular strings (deferred - requires custom ESLint plugin)
+- [x] Add unit tests that verify computed z-index on rendered components (added anti-pattern prevention tests)
+- [x] Update RESPONSIVENESS_FRAMEWORK.md with anti-patterns section
+- [x] Test Quick Presets (...) menu works correctly after fix

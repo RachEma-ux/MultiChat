@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Z_INDEX } from "@/lib/z-index";
+import { Z_CLASS, getZIndexClassWithOffset } from "@/lib/z-index";
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { XIcon } from "lucide-react";
 import * as React from "react";
@@ -80,7 +80,8 @@ function DialogOverlay({
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
       className={cn(
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 z-[${Z_INDEX.MODAL}] bg-black/50",
+        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 fixed inset-0 bg-black/50",
+        Z_CLASS.MODAL,
         className
       )}
       {...props}
@@ -89,6 +90,9 @@ function DialogOverlay({
 }
 
 DialogOverlay.displayName = "DialogOverlay";
+
+// Pre-computed class for modal content (MODAL + 10 = 410)
+const DIALOG_CONTENT_Z_CLASS = getZIndexClassWithOffset('MODAL', 10);
 
 function DialogContent({
   className,
@@ -166,7 +170,8 @@ function DialogContent({
         ref={contentRef}
         data-slot="dialog-content"
         className={cn(
-          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed z-[${Z_INDEX.MODAL + 10}] grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          "bg-background data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed grid w-full max-w-[calc(100%-2rem)] gap-4 rounded-lg border p-6 shadow-lg duration-200 sm:max-w-lg",
+          DIALOG_CONTENT_Z_CLASS,
           className
         )}
         style={{
@@ -253,4 +258,3 @@ export {
   DialogTitle,
   DialogTrigger
 };
-

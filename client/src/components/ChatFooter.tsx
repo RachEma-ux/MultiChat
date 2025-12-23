@@ -3,7 +3,7 @@ import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, Edit, Trash2, Ba
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ConnectorsStore } from './ConnectorsStore';
-import { Z_INDEX } from '@/lib/z-index';
+import { Z_CLASS } from '@/lib/z-index';
 import { useBringToFront } from '@/contexts/ZIndexContext';
 
 interface Attachment {

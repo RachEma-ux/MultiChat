@@ -317,6 +317,121 @@ When creating new modals or dropdowns, start with the templates in `/client/src/
 
 ---
 
+## Anti-Patterns (Common Mistakes)
+
+This section documents common mistakes that can cause bugs. Learn from these to avoid repeating them.
+
+### 1. Template Literal Inside Regular String (CRITICAL)
+
+**The Bug:**
+```tsx
+// ❌ BROKEN - Template literal syntax inside a regular string
+className="z-[${Z_INDEX.MODAL}]"
+
+// This literally renders as: class="z-[${Z_INDEX.MODAL}]"
+// The ${} is NOT interpolated because it's not a template literal!
+```
+
+**The Fix:**
+```tsx
+// ✅ CORRECT - Use Z_CLASS constants (RECOMMENDED)
+className={Z_CLASS.MODAL}
+
+// ✅ CORRECT - Use template literal (backticks) if you must interpolate
+className={`z-[${Z_INDEX.MODAL}]`}
+```
+
+**Why This Matters:**
+- The broken code applies a literal CSS class `z-[${Z_INDEX.MODAL}]` which is invalid
+- Tailwind doesn't recognize it, so no z-index is applied
+- This can cause React Error #185 (Maximum update depth exceeded) when used with Radix UI components
+- The dropdown/modal positioning logic fails, causing infinite re-renders
+
+**Prevention:**
+- Always use `Z_CLASS.*` constants for className props
+- Never use `Z_INDEX.*` directly in className strings
+- The `Z_INDEX` export is deprecated - use `Z_VALUES` for numeric access
+
+### 2. setState During Render Phase
+
+**The Bug:**
+```tsx
+// ❌ BROKEN - Calling parent's setState during render
+function ChildComponent({ onTitleChange }) {
+  const title = computeTitle();
+  onTitleChange(title); // This calls parent's setState during render!
+  return <div>{title}</div>;
+}
+```
+
+**The Fix:**
+```tsx
+// ✅ CORRECT - Use useEffect to notify parent after render
+function ChildComponent({ onTitleChange }) {
+  const title = computeTitle();
+  const prevTitleRef = useRef(title);
+  const isFirstRender = useRef(true);
+  
+  useEffect(() => {
+    // Skip first render to avoid calling during initial mount
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    if (prevTitleRef.current !== title) {
+      prevTitleRef.current = title;
+      onTitleChange(title);
+    }
+  }, [title, onTitleChange]);
+  
+  return <div>{title}</div>;
+}
+```
+
+**Why This Matters:**
+- React Error: "Cannot update a component while rendering a different component"
+- Can cause infinite render loops
+- Breaks React's rendering model
+
+### 3. Unstable References in useEffect Dependencies
+
+**The Bug:**
+```tsx
+// ❌ BROKEN - context.version changes on every render
+const context = useContext(ZIndexContext);
+useEffect(() => {
+  // This runs on every render because context.version is always new
+  doSomething();
+}, [context?.version]);
+```
+
+**The Fix:**
+```tsx
+// ✅ CORRECT - Use stable references or callbacks
+const { getZIndex } = useContext(ZIndexContext);
+// getZIndex is a stable callback that doesn't change
+```
+
+### 4. forceUpdate Anti-Pattern
+
+**The Bug:**
+```tsx
+// ❌ BROKEN - Using forceUpdate to trigger re-renders
+const [, forceUpdate] = useState({});
+useEffect(() => {
+  forceUpdate({}); // Creates new object, triggers re-render
+}, [someDependency]);
+```
+
+**The Fix:**
+```tsx
+// ✅ CORRECT - Use proper state management
+const [state, setState] = useState(initialState);
+// Update state meaningfully instead of forcing re-renders
+```
+
+---
+
 ## Troubleshooting
 
 ### Element Hidden Behind Another

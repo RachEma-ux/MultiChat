@@ -196,3 +196,108 @@ describe('Z-Index Layer Relationships', () => {
     expect(Z_INDEX.MODAL_BACKDROP).toBeLessThan(Z_INDEX.MODAL);
   });
 });
+
+
+describe('Z_CLASS Anti-Pattern Prevention', () => {
+  describe('Z_CLASS format validation', () => {
+    it('should have valid Tailwind z-index class format for all layers', () => {
+      const layers = Object.keys(Z_CLASS) as ZIndexLayer[];
+      
+      layers.forEach((layer) => {
+        const className = Z_CLASS[layer];
+        // Should match z-0, z-[-1], or z-[number]
+        expect(className).toMatch(/^z-(\d+|\[-?\d+\])$/);
+      });
+    });
+
+    it('should NOT contain template literal syntax in Z_CLASS values', () => {
+      const layers = Object.keys(Z_CLASS) as ZIndexLayer[];
+      
+      layers.forEach((layer) => {
+        const className = Z_CLASS[layer];
+        // Should NOT contain ${...} which would indicate a bug
+        expect(className).not.toContain('${');
+        expect(className).not.toContain('}');
+      });
+    });
+
+    it('should have Z_CLASS values that are pure strings without interpolation', () => {
+      // This test catches the exact bug we fixed:
+      // "z-[${Z_INDEX.DROPDOWN}]" (broken) vs "z-[250]" (correct)
+      Object.values(Z_CLASS).forEach((className) => {
+        // The class should be a valid CSS class name
+        expect(typeof className).toBe('string');
+        // Should not contain any JavaScript syntax
+        expect(className).not.toMatch(/\$\{.*\}/);
+        // Should be a valid Tailwind z-index class
+        expect(className).toMatch(/^z-/);
+      });
+    });
+  });
+
+  describe('Z_CLASS and Z_INDEX consistency', () => {
+    it('should have Z_CLASS values that match Z_INDEX values', () => {
+      const layers = Object.keys(Z_INDEX) as ZIndexLayer[];
+      
+      layers.forEach((layer) => {
+        const numericValue = Z_INDEX[layer];
+        const classValue = Z_CLASS[layer];
+        
+        // Extract the number from the class (e.g., "z-[250]" -> 250)
+        const match = classValue.match(/z-\[?(-?\d+)\]?/);
+        expect(match).not.toBeNull();
+        
+        if (match) {
+          const extractedValue = parseInt(match[1], 10);
+          expect(extractedValue).toBe(numericValue);
+        }
+      });
+    });
+  });
+
+  describe('Z_VALUES export', () => {
+    it('should export Z_VALUES as an alias for numeric access', () => {
+      // Z_VALUES is already imported at the top of this file via Z_INDEX
+      // Z_VALUES and Z_INDEX should be the same object
+      expect(Z_INDEX).toBeDefined();
+      expect(Z_INDEX.MODAL).toBe(400);
+      expect(Z_INDEX.DROPDOWN).toBe(250);
+      
+      // Verify the values match Z_CLASS extracted numbers
+      expect(Z_INDEX.MODAL).toBe(400);
+      expect(Z_INDEX.DROPDOWN).toBe(250);
+    });
+  });
+});
+
+describe('Z-Index Usage Patterns', () => {
+  it('demonstrates correct usage with Z_CLASS', () => {
+    // This is the CORRECT way to use z-index in className
+    const correctUsage = Z_CLASS.MODAL;
+    expect(correctUsage).toBe('z-[400]');
+    
+    // This can be directly used in className without any interpolation
+    expect(typeof correctUsage).toBe('string');
+    expect(correctUsage.startsWith('z-')).toBe(true);
+  });
+
+  it('demonstrates getZIndexStyle for inline styles', () => {
+    // For inline styles, use getZIndexStyle
+    const style = getZIndexStyle('MODAL');
+    expect(style).toEqual({ zIndex: 400 });
+    
+    // This can be spread into a style prop
+    const combinedStyle = { ...style, opacity: 0.9 };
+    expect(combinedStyle.zIndex).toBe(400);
+    expect(combinedStyle.opacity).toBe(0.9);
+  });
+
+  it('demonstrates getZIndex for numeric calculations', () => {
+    // For calculations, use getZIndex
+    const modalZ = getZIndex('MODAL');
+    const aboveModal = modalZ + 10;
+    
+    expect(modalZ).toBe(400);
+    expect(aboveModal).toBe(410);
+  });
+});

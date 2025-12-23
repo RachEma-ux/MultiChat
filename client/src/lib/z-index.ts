@@ -12,9 +12,19 @@
  * 
  * RULES:
  * 1. NEVER use arbitrary z-index values (z-50, z-[999], etc.) in components
- * 2. ALWAYS import from this file and use the provided constants
- * 3. If you need a new layer, add it here with proper documentation
- * 4. The ESLint rule will warn you if you use arbitrary z-index values
+ * 2. ALWAYS use Z_CLASS for Tailwind classes (e.g., Z_CLASS.MODAL)
+ * 3. Use Z_VALUES only when you need numeric values (e.g., inline styles)
+ * 4. If you need a new layer, add it here with proper documentation
+ * 
+ * ⚠️ ANTI-PATTERNS TO AVOID:
+ * ❌ z-[${Z_VALUES.MODAL}]     - Template literal in regular string doesn't work!
+ * ❌ `z-[${someVariable}]`     - Dynamic classes aren't picked up by Tailwind
+ * ❌ z-50, z-[999]             - Arbitrary values bypass the system
+ * 
+ * ✅ CORRECT USAGE:
+ * ✅ Z_CLASS.MODAL             - Pre-computed class string
+ * ✅ style={{ zIndex: Z_VALUES.MODAL }}  - Inline style for dynamic needs
+ * ✅ getZIndexClass('MODAL')   - Function that returns class string
  * 
  * LAYER HIERARCHY (from bottom to top):
  * ┌─────────────────────────────────────────────────────────────┐
@@ -35,51 +45,26 @@
  */
 
 // =============================================================================
-// Z-INDEX SCALE - TypeScript Enforced Constants
+// INTERNAL Z-INDEX SCALE (Not exported directly to prevent misuse)
 // =============================================================================
 
 /**
- * The complete z-index scale for the application.
- * Use these values EXCLUSIVELY - never use arbitrary z-index values.
+ * Internal z-index numeric values.
+ * NOT exported directly - use Z_VALUES for numeric access.
  */
-export const Z_INDEX = {
-  /** Background elements, decorations (z-index: -1) */
+const _Z_INDEX = {
   BELOW: -1,
-  
-  /** Normal document flow (z-index: 0) */
   BASE: 0,
-  
-  /** Elements slightly above normal flow (z-index: 50) */
   ABOVE: 50,
-  
-  /** Cards with elevation, raised elements (z-index: 100) */
   ELEVATED: 100,
-  
-  /** Sticky headers, floating action buttons (z-index: 150) */
   STICKY: 150,
-  
-  /** Floating windows, chat windows (z-index: 200) */
   FLOATING: 200,
-  
-  /** Dropdown menus, select menus (z-index: 250) */
   DROPDOWN: 250,
-  
-  /** Popovers, tooltips (z-index: 300) */
   POPOVER: 300,
-  
-  /** Dark backdrop behind modals (z-index: 350) */
   MODAL_BACKDROP: 350,
-  
-  /** Modal dialogs, full-screen overlays (z-index: 400) */
   MODAL: 400,
-  
-  /** Modals inside modals, confirmation dialogs (z-index: 450) */
   NESTED_MODAL: 450,
-  
-  /** Toast notifications, snackbars (z-index: 500) */
   TOAST: 500,
-  
-  /** System-level overlays, loading screens (z-index: 9999) */
   CRITICAL: 9999,
 } as const;
 
@@ -88,64 +73,55 @@ export const Z_INDEX = {
 // =============================================================================
 
 /** All valid z-index layer names */
-export type ZIndexLayer = keyof typeof Z_INDEX;
+export type ZIndexLayer = keyof typeof _Z_INDEX;
 
 /** All valid z-index values */
-export type ZIndexValue = typeof Z_INDEX[ZIndexLayer];
+export type ZIndexValue = typeof _Z_INDEX[ZIndexLayer];
 
 // =============================================================================
-// UTILITY FUNCTIONS
+// EXPORTED CONSTANTS - USE THESE!
 // =============================================================================
 
 /**
- * Get the z-index value for a specific layer.
- * Use this function to ensure type safety when accessing z-index values.
+ * Z_VALUES - Numeric z-index values for inline styles and calculations.
+ * 
+ * USE THIS when you need the actual number (e.g., for style={{ zIndex: ... }})
  * 
  * @example
- * const modalZ = getZIndex('MODAL'); // Returns 400
- * const dropdownZ = getZIndex('DROPDOWN'); // Returns 250
+ * // For inline styles
+ * <div style={{ zIndex: Z_VALUES.MODAL }}>Modal</div>
+ * 
+ * // For calculations
+ * const aboveModal = Z_VALUES.MODAL + 10;
  */
-export function getZIndex(layer: ZIndexLayer): ZIndexValue {
-  return Z_INDEX[layer];
-}
+export const Z_VALUES = _Z_INDEX;
 
 /**
- * Get the Tailwind CSS class for a z-index layer.
- * Returns the appropriate z-[value] class for use in className.
+ * @deprecated Use Z_VALUES instead. Z_INDEX is kept for backward compatibility
+ * but will be removed in a future version.
  * 
- * @example
- * <div className={getZIndexClass('MODAL')}>Modal content</div>
- * // Renders: <div class="z-[400]">Modal content</div>
+ * ⚠️ WARNING: Do NOT use Z_INDEX in template literals within className strings!
+ * ❌ WRONG: className={`z-[${Z_INDEX.MODAL}]`}  // Works but error-prone
+ * ❌ WRONG: className="z-[${Z_INDEX.MODAL}]"    // BROKEN - not interpolated!
+ * ✅ RIGHT: className={Z_CLASS.MODAL}           // Always use Z_CLASS for classes
  */
-export function getZIndexClass(layer: ZIndexLayer): string {
-  const value = Z_INDEX[layer];
-  if (value < 0) {
-    return `z-[${value}]`;
-  }
-  return `z-[${value}]`;
-}
+export const Z_INDEX = _Z_INDEX;
 
 /**
- * Get inline style object for z-index.
- * Useful when you need to apply z-index via style prop.
+ * Z_CLASS - Pre-computed Tailwind CSS classes for z-index.
+ * 
+ * ✅ ALWAYS USE THIS for className props!
+ * 
+ * These are pre-computed strings that Tailwind can statically analyze.
+ * Using these prevents template literal bugs and ensures classes are included in the build.
  * 
  * @example
- * <div style={getZIndexStyle('FLOATING')}>Floating window</div>
- */
-export function getZIndexStyle(layer: ZIndexLayer): { zIndex: number } {
-  return { zIndex: Z_INDEX[layer] };
-}
-
-// =============================================================================
-// TAILWIND CLASS CONSTANTS
-// =============================================================================
-
-/**
- * Pre-computed Tailwind classes for each z-index layer.
- * Use these directly in className for better readability.
- * 
- * @example
+ * // In className (CORRECT)
  * <div className={Z_CLASS.MODAL}>Modal content</div>
+ * <div className={cn("other-classes", Z_CLASS.DROPDOWN)}>Dropdown</div>
+ * 
+ * // With conditional classes
+ * <div className={cn(isOpen && Z_CLASS.MODAL)}>Content</div>
  */
 export const Z_CLASS = {
   BELOW: 'z-[-1]',
@@ -164,6 +140,67 @@ export const Z_CLASS = {
 } as const;
 
 // =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+/**
+ * Get the z-index numeric value for a specific layer.
+ * 
+ * @example
+ * const modalZ = getZIndex('MODAL'); // Returns 400
+ * <div style={{ zIndex: getZIndex('FLOATING') }}>Window</div>
+ */
+export function getZIndex(layer: ZIndexLayer): ZIndexValue {
+  return _Z_INDEX[layer];
+}
+
+/**
+ * Get the Tailwind CSS class for a z-index layer.
+ * 
+ * Prefer using Z_CLASS directly for better readability,
+ * but this function is useful for dynamic layer selection.
+ * 
+ * @example
+ * <div className={getZIndexClass('MODAL')}>Modal content</div>
+ * // Renders: <div class="z-[400]">Modal content</div>
+ * 
+ * // Dynamic usage
+ * const layer: ZIndexLayer = isModal ? 'MODAL' : 'DROPDOWN';
+ * <div className={getZIndexClass(layer)}>Content</div>
+ */
+export function getZIndexClass(layer: ZIndexLayer): string {
+  return Z_CLASS[layer];
+}
+
+/**
+ * Get inline style object for z-index.
+ * Useful when you need to apply z-index via style prop.
+ * 
+ * @example
+ * <div style={getZIndexStyle('FLOATING')}>Floating window</div>
+ * 
+ * // Combining with other styles
+ * <div style={{ ...getZIndexStyle('MODAL'), opacity: 0.9 }}>Modal</div>
+ */
+export function getZIndexStyle(layer: ZIndexLayer): { zIndex: number } {
+  return { zIndex: _Z_INDEX[layer] };
+}
+
+/**
+ * Create a z-index class with an offset from a base layer.
+ * Useful for stacking elements within the same layer category.
+ * 
+ * @example
+ * // Modal content slightly above modal backdrop
+ * <div className={getZIndexClassWithOffset('MODAL', 10)}>Modal Content</div>
+ * // Returns: "z-[410]"
+ */
+export function getZIndexClassWithOffset(layer: ZIndexLayer, offset: number): string {
+  const value = _Z_INDEX[layer] + offset;
+  return `z-[${value}]`;
+}
+
+// =============================================================================
 // COMPONENT-SPECIFIC MAPPINGS
 // =============================================================================
 
@@ -173,40 +210,82 @@ export const Z_CLASS = {
  */
 export const COMPONENT_Z_INDEX = {
   // Layout components
-  header: Z_INDEX.STICKY,
-  sidebar: Z_INDEX.ELEVATED,
-  footer: Z_INDEX.ELEVATED,
+  header: _Z_INDEX.STICKY,
+  sidebar: _Z_INDEX.ELEVATED,
+  footer: _Z_INDEX.ELEVATED,
   
   // Floating elements
-  floatingWindow: Z_INDEX.FLOATING,
-  floatingButton: Z_INDEX.STICKY,
-  windowDock: Z_INDEX.FLOATING,
+  floatingWindow: _Z_INDEX.FLOATING,
+  floatingButton: _Z_INDEX.STICKY,
+  windowDock: _Z_INDEX.FLOATING,
   
   // Menus and dropdowns
-  dropdownMenu: Z_INDEX.DROPDOWN,
-  selectMenu: Z_INDEX.DROPDOWN,
-  contextMenu: Z_INDEX.DROPDOWN,
+  dropdownMenu: _Z_INDEX.DROPDOWN,
+  selectMenu: _Z_INDEX.DROPDOWN,
+  contextMenu: _Z_INDEX.DROPDOWN,
   
   // Popovers and tooltips
-  tooltip: Z_INDEX.POPOVER,
-  popover: Z_INDEX.POPOVER,
+  tooltip: _Z_INDEX.POPOVER,
+  popover: _Z_INDEX.POPOVER,
   
   // Modals and dialogs
-  modalBackdrop: Z_INDEX.MODAL_BACKDROP,
-  modal: Z_INDEX.MODAL,
-  dialog: Z_INDEX.MODAL,
-  drawer: Z_INDEX.MODAL,
-  nestedModal: Z_INDEX.NESTED_MODAL,
-  confirmDialog: Z_INDEX.NESTED_MODAL,
+  modalBackdrop: _Z_INDEX.MODAL_BACKDROP,
+  modal: _Z_INDEX.MODAL,
+  dialog: _Z_INDEX.MODAL,
+  drawer: _Z_INDEX.MODAL,
+  nestedModal: _Z_INDEX.NESTED_MODAL,
+  confirmDialog: _Z_INDEX.NESTED_MODAL,
   
   // Notifications
-  toast: Z_INDEX.TOAST,
-  notification: Z_INDEX.TOAST,
-  snackbar: Z_INDEX.TOAST,
+  toast: _Z_INDEX.TOAST,
+  notification: _Z_INDEX.TOAST,
+  snackbar: _Z_INDEX.TOAST,
   
   // System
-  loadingOverlay: Z_INDEX.CRITICAL,
-  errorBoundary: Z_INDEX.CRITICAL,
+  loadingOverlay: _Z_INDEX.CRITICAL,
+  errorBoundary: _Z_INDEX.CRITICAL,
+} as const;
+
+/**
+ * Pre-computed Tailwind classes for component types.
+ * Use these directly in components for maximum safety.
+ */
+export const COMPONENT_Z_CLASS = {
+  // Layout components
+  header: Z_CLASS.STICKY,
+  sidebar: Z_CLASS.ELEVATED,
+  footer: Z_CLASS.ELEVATED,
+  
+  // Floating elements
+  floatingWindow: Z_CLASS.FLOATING,
+  floatingButton: Z_CLASS.STICKY,
+  windowDock: Z_CLASS.FLOATING,
+  
+  // Menus and dropdowns
+  dropdownMenu: Z_CLASS.DROPDOWN,
+  selectMenu: Z_CLASS.DROPDOWN,
+  contextMenu: Z_CLASS.DROPDOWN,
+  
+  // Popovers and tooltips
+  tooltip: Z_CLASS.POPOVER,
+  popover: Z_CLASS.POPOVER,
+  
+  // Modals and dialogs
+  modalBackdrop: Z_CLASS.MODAL_BACKDROP,
+  modal: Z_CLASS.MODAL,
+  dialog: Z_CLASS.MODAL,
+  drawer: Z_CLASS.MODAL,
+  nestedModal: Z_CLASS.NESTED_MODAL,
+  confirmDialog: Z_CLASS.NESTED_MODAL,
+  
+  // Notifications
+  toast: Z_CLASS.TOAST,
+  notification: Z_CLASS.TOAST,
+  snackbar: Z_CLASS.TOAST,
+  
+  // System
+  loadingOverlay: Z_CLASS.CRITICAL,
+  errorBoundary: Z_CLASS.CRITICAL,
 } as const;
 
 // =============================================================================
@@ -218,7 +297,7 @@ export const COMPONENT_Z_INDEX = {
  * Useful for runtime validation or testing.
  */
 export function isValidZIndex(value: number): boolean {
-  return Object.values(Z_INDEX).includes(value as ZIndexValue);
+  return Object.values(_Z_INDEX).includes(value as ZIndexValue);
 }
 
 /**
@@ -226,7 +305,7 @@ export function isValidZIndex(value: number): boolean {
  * Returns undefined if the value is not in our scale.
  */
 export function getLayerName(value: number): ZIndexLayer | undefined {
-  const entries = Object.entries(Z_INDEX) as [ZIndexLayer, ZIndexValue][];
+  const entries = Object.entries(_Z_INDEX) as [ZIndexLayer, ZIndexValue][];
   const entry = entries.find(([_, v]) => v === value);
   return entry?.[0];
 }

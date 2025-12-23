@@ -40,7 +40,7 @@ import {
   filterByCategory, getAllCategories, duplicatePreset, PresetUsageStats 
 } from '@/lib/quick-presets';
 import { toast } from 'sonner';
-import { Z_INDEX } from '@/lib/z-index';
+import { Z_VALUES } from '@/lib/z-index';
 import { useZIndexManager } from '@/contexts/ZIndexContext';
 
 // ============================================
@@ -325,8 +325,14 @@ export function FloatingChatWindow({
   // ============================================
   
   // Notify parent of title changes - use ref to avoid infinite loops
+  // Skip initial mount to prevent setState during render
   const prevTitleRef = useRef(conversationTitle);
+  const isMountedRef = useRef(false);
   useEffect(() => {
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      return;
+    }
     if (prevTitleRef.current !== conversationTitle) {
       prevTitleRef.current = conversationTitle;
       onTitleChange?.(conversationTitle);
@@ -335,7 +341,12 @@ export function FloatingChatWindow({
   
   // Notify parent of message count changes
   const prevMessageCountRef = useRef(messages.length);
+  const messageCountMountedRef = useRef(false);
   useEffect(() => {
+    if (!messageCountMountedRef.current) {
+      messageCountMountedRef.current = true;
+      return;
+    }
     if (prevMessageCountRef.current !== messages.length) {
       prevMessageCountRef.current = messages.length;
       onMessageCountChange?.(messages.length);
@@ -344,7 +355,12 @@ export function FloatingChatWindow({
   
   // Notify parent of size changes
   const prevSizeRef = useRef(windowSize);
+  const sizeMountedRef = useRef(false);
   useEffect(() => {
+    if (!sizeMountedRef.current) {
+      sizeMountedRef.current = true;
+      return;
+    }
     if (prevSizeRef.current.width !== windowSize.width || prevSizeRef.current.height !== windowSize.height) {
       prevSizeRef.current = windowSize;
       onSizeChange?.(windowSize);
