@@ -3,7 +3,8 @@ import { Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, Edit, Trash2, Ba
 import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { ConnectorsStore } from './ConnectorsStore';
-import { Z_CLASS, Z_INDEX } from '@/lib/z-index';
+import { Z_INDEX } from '@/lib/z-index';
+import { useBringToFront } from '@/contexts/ZIndexContext';
 
 interface Attachment {
   name: string;
@@ -81,6 +82,10 @@ export function ChatFooter({
   const [showSettings, setShowSettings] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const [showConnectorsStore, setShowConnectorsStore] = useState(false);
+  
+  // Dynamic z-index for menus
+  const footerMenuZ = useBringToFront('chat-footer-menu', 'dropdown');
+  const settingsMenuZ = useBringToFront('chat-footer-settings', 'dropdown');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const inputMessageRef = useRef(inputMessage);
 
@@ -176,10 +181,15 @@ export function ChatFooter({
             {showFooterMenu && (
               <>
                 <div 
-                  className={`fixed inset-0 z-[${Z_INDEX.FLOATING - 1}]`}
-                  onClick={() => setShowFooterMenu(false)}
+                  className="fixed inset-0"
+                  style={{ zIndex: footerMenuZ.zIndex - 1 }}
+                  onClick={() => { setShowFooterMenu(false); footerMenuZ.close(); }}
                 />
-                <div className={`absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl ${Z_CLASS.FLOATING} border border-border overflow-hidden`}>
+                <div 
+                  className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl border border-border overflow-hidden"
+                  style={{ zIndex: footerMenuZ.zIndex }}
+                  onMouseEnter={() => footerMenuZ.bringToFront()}
+                >
                   <button
                     onClick={() => {
                       onNewChat?.();
@@ -340,10 +350,15 @@ export function ChatFooter({
             {showSettings && (
               <>
                 <div 
-                  className={`fixed inset-0 z-[${Z_INDEX.FLOATING - 1}]`}
-                  onClick={() => setShowSettings(false)}
+                  className="fixed inset-0"
+                  style={{ zIndex: settingsMenuZ.zIndex - 1 }}
+                  onClick={() => { setShowSettings(false); settingsMenuZ.close(); }}
                 />
-                <div className={`absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl ${Z_CLASS.FLOATING} border border-border overflow-hidden`}>
+                <div 
+                  className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl border border-border overflow-hidden"
+                  style={{ zIndex: settingsMenuZ.zIndex }}
+                  onMouseEnter={() => settingsMenuZ.bringToFront()}
+                >
                   <div className="px-4 py-3 border-b border-border">
                     <h3 className="text-sm font-semibold">Settings</h3>
                   </div>

@@ -40,7 +40,8 @@ import {
   filterByCategory, getAllCategories, duplicatePreset, PresetUsageStats 
 } from '@/lib/quick-presets';
 import { toast } from 'sonner';
-import { Z_CLASS } from '@/lib/z-index';
+import { Z_INDEX } from '@/lib/z-index';
+import { useZIndexManager } from '@/contexts/ZIndexContext';
 
 // ============================================
 // TYPES & INTERFACES
@@ -138,6 +139,9 @@ export function FloatingChatWindow({
   onMessageCountChange,
   onPinnedChange,
 }: FloatingChatWindowProps) {
+  
+  // Dynamic z-index management - brings window to front when clicked/opened
+  const { zIndex, bringToFront } = useZIndexManager(`floating-chat-${id}`, 'floating');
   
   // ============================================
   // STATE - Window Management
@@ -907,8 +911,10 @@ export function FloatingChatWindow({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${Z_CLASS.FLOATING} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
-        style={windowStyle}
+        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
+        style={{ ...windowStyle, zIndex }}
+        onMouseDown={bringToFront}
+        onTouchStart={bringToFront}
       >
         {/* Header */}
         <div 

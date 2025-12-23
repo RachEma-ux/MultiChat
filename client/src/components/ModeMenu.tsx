@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useBringToFront } from '@/contexts/ZIndexContext';
 
 type Mode = 'empty' | 'chat' | 'conversation' | 'agents';
 
@@ -20,6 +21,18 @@ const MODE_CONFIG: Record<Mode, { label: string; path: string }> = {
 export function ModeMenu({ currentMode, onAddChatWindow }: ModeMenuProps) {
   const [location, setLocation] = useLocation();
   const [showModeMenu, setShowModeMenu] = useState(false);
+  
+  // Dynamic z-index - brings menu to front when opened
+  const { zIndex, bringToFront, close } = useBringToFront('mode-menu', 'dropdown');
+
+  // Bring to front when menu opens
+  useEffect(() => {
+    if (showModeMenu) {
+      bringToFront();
+    } else {
+      close();
+    }
+  }, [showModeMenu, bringToFront, close]);
 
   const handleModeSelect = (mode: Mode) => {
     setShowModeMenu(false);
@@ -65,10 +78,14 @@ export function ModeMenu({ currentMode, onAddChatWindow }: ModeMenuProps) {
       {showModeMenu && (
         <>
           <div
-            className="fixed inset-0 z-[199]"
+            className="fixed inset-0"
+            style={{ zIndex: zIndex - 1 }}
             onClick={() => setShowModeMenu(false)}
           />
-          <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-[200] border border-border overflow-hidden">
+          <div 
+            className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl border border-border overflow-hidden"
+            style={{ zIndex }}
+          >
             {(Object.keys(MODE_CONFIG) as Mode[]).map((mode) => (
               <button
                 key={mode}

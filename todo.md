@@ -247,3 +247,14 @@
 - [x] Rewrite documentation with clear guidelines and examples
 - [x] Add comprehensive tests for z-index scale compliance (94 tests passing)
 - [x] Update pre-deployment checklist with z-index verification
+
+
+## Dynamic Z-Index Manager (Bring to Front System)
+- [x] Create ZIndexContext and ZIndexProvider to track open elements
+- [x] Create useBringToFront hook for components to register and bring themselves to front
+- [x] Create useZIndex hook to get current z-index for a registered element
+- [x] Update FloatingChatWindow to use dynamic z-index (bring to front on open/click)
+- [x] Update Mode dropdown to use dynamic z-index
+- [x] Update other floating components (menus, popovers) to use dynamic z-index
+- [x] Test layering: open chat window, then dropdown - dropdown should be on top (106 tests passing)
+- [x] Test layering: click on chat window - it should come to front
