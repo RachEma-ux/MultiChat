@@ -37,14 +37,14 @@ function Router() {
  * Root Application Component
  * Wraps the entire app with necessary providers:
  * - ErrorBoundary: Catches and displays React errors gracefully
- * - ThemeProvider: Manages dark/light theme state
+ * - ThemeProvider: Manages dark/light theme state (switchable=true enables user control)
  * - TooltipProvider: Enables tooltips throughout the app
  * - Toaster: Provides toast notifications
  */
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="dark" switchable={true}>
         <ZIndexProvider>
           <TooltipProvider>
             <Toaster />

@@ -6,7 +6,8 @@ import { FloatingChatWindow } from '@/components/FloatingChatWindow';
 import { WindowDock } from '@/components/WindowDock';
 import { WindowLayoutPresets, WindowLayout } from '@/components/WindowLayoutPresets';
 import { ModeMenu } from '@/components/ModeMenu';
-import { Menu, Download, X, Layout, Plus } from 'lucide-react';
+import { Menu, Download, X, Layout, Plus, Sun, Moon } from 'lucide-react';
+import { useTheme } from '@/contexts/ThemeContext';
 import { toast } from 'sonner';
 import { AnimatePresence } from 'framer-motion';
 
@@ -24,6 +25,7 @@ const DEFAULT_WINDOW_SIZE = { width: 400, height: 500 };
 const MAX_WINDOWS = 10;
 
 export default function EmptyPage() {
+  const { theme, toggleTheme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const [expandedMenuGroups, setExpandedMenuGroups] = useState<Set<string>>(new Set());
   const [chatWindows, setChatWindows] = useState<ChatWindow[]>([]);
@@ -289,6 +291,20 @@ export default function EmptyPage() {
                 onToggle={() => toggleMenuGroup('search')}
               />
               
+              {/* Theme Toggle */}
+              <div className="px-4 py-3 border-t border-border">
+                <button
+                  onClick={() => {
+                    toggleTheme?.();
+                    toast.success(`Switched to ${theme === 'dark' ? 'light' : 'dark'} mode`);
+                  }}
+                  className="w-full flex items-center gap-3 px-2 py-2 hover:bg-accent rounded-md transition-colors text-left"
+                >
+                  {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                  <span className="text-sm">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                </button>
+              </div>
+
               {/* Window Management Section */}
               <div className="px-4 py-3 border-t border-border">
                 <h3 className="text-xs font-semibold text-muted-foreground mb-2">WINDOWS</h3>

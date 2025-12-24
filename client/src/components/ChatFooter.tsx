@@ -384,13 +384,13 @@ export function ChatFooter({
                   </button>
                   <button
                     onClick={() => {
-                      toast.info('Theme settings coming soon');
+                      toast.info('Chat theme settings coming soon');
                       setShowSettings(false);
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
                   >
                     <Palette className="h-4 w-4" />
-                    <span className="text-sm">Theme</span>
+                    <span className="text-sm">Chat Theme</span>
                   </button>
                   <button
                     onClick={() => {

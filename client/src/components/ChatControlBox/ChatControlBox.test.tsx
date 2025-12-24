@@ -135,7 +135,7 @@ describe('ChatControlBox', () => {
       await waitFor(() => {
         expect(screen.getByText('Presets Setting')).toBeInTheDocument();
         expect(screen.getByText('Categories Setting')).toBeInTheDocument();
-        expect(screen.getByText('Theme')).toBeInTheDocument();
+        expect(screen.getByText('Chat Theme')).toBeInTheDocument();
         expect(screen.getByText('Language')).toBeInTheDocument();
         expect(screen.getByText('Export Data')).toBeInTheDocument();
       });

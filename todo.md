@@ -301,3 +301,18 @@
 - [x] Test component in EmptyPage (/test/chat-control-box route)
 - [x] Document component usage (JSDoc + index.ts exports)
 - [x] Write vitest unit tests (22 tests passing)
+
+
+## Theme Settings Implementation
+- [ ] Enable theme switching in ThemeProvider (set switchable=true)
+- [ ] Update Settings menu Theme button to toggle dark/light mode
+- [ ] Show current theme state in Settings menu (sun/moon icon)
+- [ ] Persist theme preference to localStorage
+- [ ] Update ChatControlBox Settings menu with theme toggle
+- [ ] Test theme switching across all pages
+
+## Theme Menu Reorganization
+- [x] Add Theme option to hamburger menu (header) before Windows Layout
+- [x] Replace Theme with Chat Theme in wheel settings menu
+- [x] Implement global theme toggle in hamburger menu
+- [ ] Implement chat-specific theme in wheel settings (shows 'coming soon')

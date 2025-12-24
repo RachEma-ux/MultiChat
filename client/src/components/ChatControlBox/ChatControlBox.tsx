@@ -43,7 +43,7 @@ import { Button } from '@/components/ui/button';
 import { 
   Menu, Plus, Settings, Save, Paperclip, Send, Sparkles, 
   Edit, Trash2, BarChart, MessageSquare, Archive, Download, 
-  X, Image as ImageIcon, Zap, Mic, Plug, FolderOpen, Palette, Globe 
+  X, Image as ImageIcon, Zap, Mic, Plug, FolderOpen, Sun, Moon, Globe, Palette 
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Z_CLASS, Z_VALUES } from '@/lib/z-index';
@@ -61,6 +61,7 @@ import { SavedConversationsModal } from '../SavedConversationsModal';
 import { SavedConversation as ChatFooterSavedConversation } from '../ChatFooter';
 import { QuickPreset, loadQuickPresets, saveQuickPresets } from '@/lib/quick-presets';
 import { MODEL_PRESETS, AI_PROVIDERS } from '@/lib/ai-providers';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -808,11 +809,11 @@ export function ChatControlBox({
                     <span className="text-sm">Categories Setting</span>
                   </button>
                   <button
-                    onClick={() => { toast.info('Theme settings coming soon'); setShowSettings(false); }}
+                    onClick={() => { toast.info('Chat theme settings coming soon'); setShowSettings(false); }}
                     className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
                   >
                     <Palette className="h-4 w-4" />
-                    <span className="text-sm">Theme</span>
+                    <span className="text-sm">Chat Theme</span>
                   </button>
                   <button
                     onClick={() => { toast.info('Language settings coming soon'); setShowSettings(false); }}
