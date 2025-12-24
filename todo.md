@@ -401,7 +401,13 @@
 
 
 ## ChatControlBox Textarea Auto-Grow Fix (Dec 24)
-- [x] Fix textarea not auto-growing on multiple lines
-- [x] Copy exact textarea behavior from ChatFooter (Classic theme)
-- [x] Ensure multi-line input works properly
-- [x] Test on mobile device
+- [ ] Fix textarea not auto-growing on multiple lines (STILL BROKEN)
+- [ ] Copy exact textarea behavior from ChatFooter (Classic theme)
+- [ ] Ensure multi-line input works properly
+- [ ] Test on mobile device
+
+## ChatControlBox Textarea Auto-Grow Fix v2 (Dec 24)
+- [ ] Examine ChatFooter textarea implementation in detail
+- [ ] Copy EXACT textarea auto-grow logic to ChatControlBox
+- [ ] Ensure textarea expands when typing multiple lines
+- [ ] Test on mobile device with virtual keyboard

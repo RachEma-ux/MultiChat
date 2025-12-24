@@ -817,18 +817,16 @@ export function ChatControlBox({
             <textarea
               ref={textareaRef}
               value={inputMessage}
-              onChange={(e) => setInputMessage(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSend();
-                }
+              onChange={(e) => {
+                setInputMessage(e.target.value);
+                // Trigger auto-grow immediately after state update
+                requestAnimationFrame(() => adjustTextareaHeight());
               }}
               placeholder={placeholder || defaultPlaceholder}
               disabled={selectedModels.length === 0}
               rows={1}
               className="w-full pl-3 pr-16 py-2.5 rounded-md bg-zinc-200 text-zinc-800 placeholder:text-zinc-500 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ lineHeight: '1.5', height: '40px', minHeight: '40px', maxHeight: '200px', overflowY: 'hidden' }}
+              style={{ lineHeight: '1.5', minHeight: '40px', maxHeight: '200px', overflowY: 'hidden' }}
             />
             <div className="absolute right-2 bottom-2 flex items-center gap-1">
               {/* Microphone Icon */}
