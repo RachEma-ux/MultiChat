@@ -228,6 +228,111 @@ test.describe('Z-Index Layering', () => {
   });
 });
 
+test.describe('Hamburger Menu Z-Index', () => {
+  
+  test('Hamburger menu appears above floating chat windows on desktop', async ({ page }) => {
+    await page.goto('/empty');
+    await page.waitForLoadState('networkidle');
+    
+    // First, open a chat window
+    const modeButton = page.getByRole('button', { name: /mode/i });
+    
+    if (await modeButton.isVisible()) {
+      await modeButton.click();
+      await page.waitForTimeout(200);
+      
+      // Click to add a chat window
+      const chatOption = page.getByText(/^chat$/i, { exact: false });
+      if (await chatOption.isVisible()) {
+        await chatOption.click();
+        await page.waitForTimeout(500);
+      }
+    }
+    
+    // Now open the hamburger menu
+    const hamburgerButton = page.locator('button').filter({ has: page.locator('svg.lucide-menu') }).first();
+    
+    if (await hamburgerButton.isVisible()) {
+      await hamburgerButton.click();
+      await page.waitForTimeout(300);
+      
+      // Take a screenshot - hamburger menu should be above the chat window
+      await expect(page).toHaveScreenshot('hamburger-menu-above-chat-window.png', {
+        maxDiffPixels: 200,
+      });
+      
+      // Verify the sidebar menu has correct z-index (275-280 range, above FLOATING 200)
+      const sidebarMenu = page.locator('.fixed.left-0.top-0.bottom-0').first();
+      if (await sidebarMenu.isVisible()) {
+        const zIndex = await sidebarMenu.evaluate((el) => {
+          return window.getComputedStyle(el).zIndex;
+        });
+        
+        // Sidebar menu should have z-index >= 275 (SIDEBAR_BACKDROP/SIDEBAR_MENU)
+        expect(parseInt(zIndex) || 0).toBeGreaterThanOrEqual(275);
+      }
+      
+      // Verify the backdrop is also above floating windows
+      const backdrop = page.locator('.fixed.inset-0.bg-black\\/50').first();
+      if (await backdrop.isVisible()) {
+        const backdropZIndex = await backdrop.evaluate((el) => {
+          return window.getComputedStyle(el).zIndex;
+        });
+        
+        // Backdrop should have z-index >= 275
+        expect(parseInt(backdropZIndex) || 0).toBeGreaterThanOrEqual(275);
+      }
+    }
+  });
+
+  test('Hamburger menu appears above floating chat windows on mobile', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+    
+    await page.goto('/empty');
+    await page.waitForLoadState('networkidle');
+    
+    // First, open a chat window
+    const modeButton = page.getByRole('button', { name: /mode/i });
+    
+    if (await modeButton.isVisible()) {
+      await modeButton.click();
+      await page.waitForTimeout(200);
+      
+      // Click to add a chat window
+      const chatOption = page.getByText(/^chat$/i, { exact: false });
+      if (await chatOption.isVisible()) {
+        await chatOption.click();
+        await page.waitForTimeout(500);
+      }
+    }
+    
+    // Now open the hamburger menu
+    const hamburgerButton = page.locator('button').filter({ has: page.locator('svg.lucide-menu') }).first();
+    
+    if (await hamburgerButton.isVisible()) {
+      await hamburgerButton.click();
+      await page.waitForTimeout(300);
+      
+      // Take a screenshot - hamburger menu should be above the chat window on mobile
+      await expect(page).toHaveScreenshot('mobile-hamburger-menu-above-chat-window.png', {
+        maxDiffPixels: 200,
+      });
+      
+      // Verify the sidebar menu has correct z-index
+      const sidebarMenu = page.locator('.fixed.left-0.top-0.bottom-0').first();
+      if (await sidebarMenu.isVisible()) {
+        const zIndex = await sidebarMenu.evaluate((el) => {
+          return window.getComputedStyle(el).zIndex;
+        });
+        
+        // Sidebar menu should have z-index >= 275
+        expect(parseInt(zIndex) || 0).toBeGreaterThanOrEqual(275);
+      }
+    }
+  });
+});
+
 test.describe('Mobile Z-Index Layering', () => {
   test.use({ viewport: { width: 375, height: 667 } }); // iPhone SE size
 

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { Z_CLASS } from '@/lib/z-index';
 import { useAuth } from '@/_core/hooks/useAuth';
 import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
@@ -762,10 +763,10 @@ export default function Home() {
               {showModeMenu && (
                 <>
                   <div 
-                    className="fixed inset-0 z-40"
+                    className={`fixed inset-0 ${Z_CLASS.FLOATING}`}
                     onClick={() => setShowModeMenu(false)}
                   />
-                  <div className="absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                  <div className={`absolute top-full right-0 mt-2 w-48 bg-card rounded-lg shadow-2xl ${Z_CLASS.DROPDOWN} border border-border overflow-hidden`}>
                     {['Agents', 'Chat', 'Conversation', 'Empty'].map((mode) => (
                       <button
                         key={mode}
@@ -810,10 +811,10 @@ export default function Home() {
         {showMenu && (
           <>
             <div 
-              className="fixed inset-0 z-40"
+              className={`fixed inset-0 ${Z_CLASS.SIDEBAR_BACKDROP}`}
               onClick={() => setShowMenu(false)}
             />
-            <div className="absolute top-14 md:top-16 left-2 md:left-4 w-72 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl z-50 border border-border max-h-[80vh] overflow-y-auto">
+            <div className={`absolute top-14 md:top-16 left-2 md:left-4 w-72 max-w-[calc(100vw-2rem)] bg-card rounded-lg shadow-2xl ${Z_CLASS.SIDEBAR_MENU} border border-border max-h-[80vh] overflow-y-auto`}>
               <CollapsibleMenuGroup 
                 title="USER ACCOUNT" 
                 items={['Item1', 'Item2', 'Item3']} 
@@ -1241,10 +1242,10 @@ export default function Home() {
               {showFooterMenu && (
                 <>
                   <div 
-                    className="fixed inset-0 z-40"
+                    className={`fixed inset-0 ${Z_CLASS.FLOATING}`}
                     onClick={() => setShowFooterMenu(false)}
                   />
-                  <div className="absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                  <div className={`absolute bottom-full left-0 mb-2 w-72 bg-card rounded-lg shadow-2xl ${Z_CLASS.DROPDOWN} border border-border overflow-hidden`}>
                     {/* Action Buttons */}
                     <button
                       onClick={() => {
@@ -1414,10 +1415,10 @@ export default function Home() {
               {showSettings && (
                 <>
                   <div 
-                    className="fixed inset-0 z-40"
+                    className={`fixed inset-0 ${Z_CLASS.FLOATING}`}
                     onClick={() => setShowSettings(false)}
                   />
-                  <div className="absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl z-50 border border-border overflow-hidden">
+                  <div className={`absolute bottom-full right-0 mb-2 w-56 bg-card rounded-lg shadow-2xl ${Z_CLASS.DROPDOWN} border border-border overflow-hidden`}>
                     <div className="px-4 py-3 border-b border-border">
                       <h3 className="text-sm font-semibold">Settings</h3>
                     </div>
@@ -1532,10 +1533,10 @@ export default function Home() {
       {showPresetEditor && (
         <>
           <div 
-            className="fixed inset-0 bg-black/50 z-50"
+            className={`fixed inset-0 bg-black/50 ${Z_CLASS.MODAL_BACKDROP}`}
             onClick={() => setShowPresetEditor(false)}
           />
-          <div className="fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-card rounded-lg shadow-2xl z-50 flex flex-col max-h-[90vh]">
+          <div className={`fixed inset-4 md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 md:w-full md:max-w-2xl bg-card rounded-lg shadow-2xl ${Z_CLASS.MODAL} flex flex-col max-h-[90vh]`}>
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-lg font-semibold">

@@ -279,3 +279,14 @@
 - [x] Set up Playwright for visual regression testing
 - [x] Create Playwright tests for dropdown z-index scenarios
 - [x] Verify all safeguards work together
+
+
+## Mandatory Z-Index Framework Compliance (App-Wide)
+- [x] Update RESPONSIVENESS_FRAMEWORK.md with mandatory compliance rule
+- [x] Audit ALL components for z-index usage (hardcoded values)
+- [x] Fix hamburger menu sidebar z-index (now uses Z_CLASS.SIDEBAR_MENU z-280)
+- [ ] Migrate remaining hardcoded z-index values to Z_CLASS constants (partial - pages fixed, some components remain)
+- [x] Update ESLint to error (not warn) on z-50, z-40, and other Tailwind z-index classes
+- [x] Add Playwright test for hamburger menu appearing above chat windows
+- [x] Add SIDEBAR_BACKDROP (z-275) and SIDEBAR_MENU (z-280) layers to z-index system
+- [x] Update vitest tests for new sidebar layers

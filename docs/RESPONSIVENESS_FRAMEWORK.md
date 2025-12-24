@@ -15,6 +15,16 @@ This document describes the complete responsiveness framework for the Multi-AI C
 
 ## Z-Index Management System
 
+### ⚠️ MANDATORY COMPLIANCE RULE
+
+> **This z-index framework is MANDATORY for ALL components in the application.**
+> 
+> - Every new component MUST use `Z_CLASS` constants from `@/lib/z-index.ts`
+> - NO hardcoded z-index values are allowed (no `z-50`, `z-[999]`, `style={{ zIndex: 100 }}`)
+> - ALL existing components MUST be migrated to use the centralized system
+> - ESLint will ERROR (not warn) on any z-index violations
+> - Pull requests with hardcoded z-index values will be rejected
+
 ### Why Centralized Z-Index?
 
 Without a centralized system, z-index values become scattered across components, leading to overlapping elements, dropdowns appearing behind modals, tooltips hidden by other elements, and difficult debugging of layering issues.

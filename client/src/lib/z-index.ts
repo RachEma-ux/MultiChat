@@ -60,6 +60,8 @@ const _Z_INDEX = {
   STICKY: 150,
   FLOATING: 200,
   DROPDOWN: 250,
+  SIDEBAR_BACKDROP: 275,  // Backdrop behind sidebar menu (above floating windows)
+  SIDEBAR_MENU: 280,      // Sidebar/hamburger menu (above floating windows and dropdowns)
   POPOVER: 300,
   MODAL_BACKDROP: 350,
   MODAL: 400,
@@ -131,6 +133,8 @@ export const Z_CLASS = {
   STICKY: 'z-[150]',
   FLOATING: 'z-[200]',
   DROPDOWN: 'z-[250]',
+  SIDEBAR_BACKDROP: 'z-[275]',
+  SIDEBAR_MENU: 'z-[280]',
   POPOVER: 'z-[300]',
   MODAL_BACKDROP: 'z-[350]',
   MODAL: 'z-[400]',
@@ -212,6 +216,8 @@ export const COMPONENT_Z_INDEX = {
   // Layout components
   header: _Z_INDEX.STICKY,
   sidebar: _Z_INDEX.ELEVATED,
+  sidebarMenu: _Z_INDEX.SIDEBAR_MENU,
+  sidebarBackdrop: _Z_INDEX.SIDEBAR_BACKDROP,
   footer: _Z_INDEX.ELEVATED,
   
   // Floating elements
@@ -254,6 +260,8 @@ export const COMPONENT_Z_CLASS = {
   // Layout components
   header: Z_CLASS.STICKY,
   sidebar: Z_CLASS.ELEVATED,
+  sidebarMenu: Z_CLASS.SIDEBAR_MENU,
+  sidebarBackdrop: Z_CLASS.SIDEBAR_BACKDROP,
   footer: Z_CLASS.ELEVATED,
   
   // Floating elements

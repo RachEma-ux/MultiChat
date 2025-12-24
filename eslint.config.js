@@ -110,23 +110,24 @@ export default [
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-unused-vars': 'off', // Use TypeScript's version instead
       
-      // Custom z-index rule - warn on arbitrary z-index values
+      // Custom z-index rule - ERROR on arbitrary z-index values (MANDATORY COMPLIANCE)
+      // All z-index values MUST come from @/lib/z-index.ts
       'no-restricted-syntax': [
-        'warn',
+        'error',
         {
           // Match z-[number] patterns in className strings
           selector: 'Literal[value=/z-\\[\\d+\\]/]',
-          message: '⚠️ Arbitrary z-index detected! Use Z_CLASS from @/lib/z-index.ts instead. Valid layers: BELOW, BASE, ABOVE, ELEVATED, STICKY, FLOATING, DROPDOWN, POPOVER, MODAL_BACKDROP, MODAL, NESTED_MODAL, TOAST, CRITICAL',
+          message: '❌ MANDATORY: Arbitrary z-index detected! Use Z_CLASS from @/lib/z-index.ts instead. Valid layers: BELOW, BASE, ABOVE, ELEVATED, STICKY, FLOATING, SIDEBAR_BACKDROP, SIDEBAR_MENU, DROPDOWN, POPOVER, MODAL_BACKDROP, MODAL, NESTED_MODAL, TOAST, CRITICAL',
         },
         {
           // Match z-50, z-100, etc. in className strings
           selector: 'Literal[value=/\\bz-(10|20|30|40|50|100|200|300|400|500|9999)\\b/]',
-          message: '⚠️ Numeric z-index class detected! Use Z_CLASS from @/lib/z-index.ts instead. Valid layers: BELOW, BASE, ABOVE, ELEVATED, STICKY, FLOATING, DROPDOWN, POPOVER, MODAL_BACKDROP, MODAL, NESTED_MODAL, TOAST, CRITICAL',
+          message: '❌ MANDATORY: Numeric z-index class detected! Use Z_CLASS from @/lib/z-index.ts instead. Valid layers: BELOW, BASE, ABOVE, ELEVATED, STICKY, FLOATING, SIDEBAR_BACKDROP, SIDEBAR_MENU, DROPDOWN, POPOVER, MODAL_BACKDROP, MODAL, NESTED_MODAL, TOAST, CRITICAL',
         },
         {
           // Match zIndex in style objects with numeric values
           selector: 'Property[key.name="zIndex"][value.type="Literal"]',
-          message: '⚠️ Inline zIndex detected! Use getZIndexStyle() from @/lib/z-index.ts instead.',
+          message: '❌ MANDATORY: Inline zIndex detected! Use getZIndexStyle() from @/lib/z-index.ts instead.',
         },
       ],
       

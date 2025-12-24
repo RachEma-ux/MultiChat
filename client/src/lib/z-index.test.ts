@@ -29,6 +29,8 @@ describe('Z-Index System', () => {
         'STICKY',
         'FLOATING',
         'DROPDOWN',
+        'SIDEBAR_BACKDROP',
+        'SIDEBAR_MENU',
         'POPOVER',
         'MODAL_BACKDROP',
         'MODAL',
@@ -51,6 +53,8 @@ describe('Z-Index System', () => {
       expect(Z_INDEX.STICKY).toBe(150);
       expect(Z_INDEX.FLOATING).toBe(200);
       expect(Z_INDEX.DROPDOWN).toBe(250);
+      expect(Z_INDEX.SIDEBAR_BACKDROP).toBe(275);
+      expect(Z_INDEX.SIDEBAR_MENU).toBe(280);
       expect(Z_INDEX.POPOVER).toBe(300);
       expect(Z_INDEX.MODAL_BACKDROP).toBe(350);
       expect(Z_INDEX.MODAL).toBe(400);
@@ -66,7 +70,9 @@ describe('Z-Index System', () => {
       expect(Z_INDEX.ELEVATED).toBeLessThan(Z_INDEX.STICKY);
       expect(Z_INDEX.STICKY).toBeLessThan(Z_INDEX.FLOATING);
       expect(Z_INDEX.FLOATING).toBeLessThan(Z_INDEX.DROPDOWN);
-      expect(Z_INDEX.DROPDOWN).toBeLessThan(Z_INDEX.POPOVER);
+      expect(Z_INDEX.DROPDOWN).toBeLessThan(Z_INDEX.SIDEBAR_BACKDROP);
+      expect(Z_INDEX.SIDEBAR_BACKDROP).toBeLessThan(Z_INDEX.SIDEBAR_MENU);
+      expect(Z_INDEX.SIDEBAR_MENU).toBeLessThan(Z_INDEX.POPOVER);
       expect(Z_INDEX.POPOVER).toBeLessThan(Z_INDEX.MODAL_BACKDROP);
       expect(Z_INDEX.MODAL_BACKDROP).toBeLessThan(Z_INDEX.MODAL);
       expect(Z_INDEX.MODAL).toBeLessThan(Z_INDEX.NESTED_MODAL);
@@ -90,6 +96,8 @@ describe('Z-Index System', () => {
       expect(Z_CLASS.BASE).toBe('z-0');
       expect(Z_CLASS.ABOVE).toBe('z-[50]');
       expect(Z_CLASS.FLOATING).toBe('z-[200]');
+      expect(Z_CLASS.SIDEBAR_BACKDROP).toBe('z-[275]');
+      expect(Z_CLASS.SIDEBAR_MENU).toBe('z-[280]');
       expect(Z_CLASS.MODAL).toBe('z-[400]');
       expect(Z_CLASS.CRITICAL).toBe('z-[9999]');
     });
@@ -175,6 +183,13 @@ describe('Z-Index Layer Relationships', () => {
   it('should ensure dropdown menus appear above floating chat windows', () => {
     // This is a critical relationship for the app
     expect(Z_INDEX.DROPDOWN).toBeGreaterThan(Z_INDEX.FLOATING);
+  });
+
+  it('should ensure sidebar menu appears above floating chat windows', () => {
+    // Critical: hamburger menu must appear above floating chat windows on mobile
+    expect(Z_INDEX.SIDEBAR_BACKDROP).toBeGreaterThan(Z_INDEX.FLOATING);
+    expect(Z_INDEX.SIDEBAR_MENU).toBeGreaterThan(Z_INDEX.FLOATING);
+    expect(Z_INDEX.SIDEBAR_MENU).toBeGreaterThan(Z_INDEX.DROPDOWN);
   });
 
   it('should ensure modals appear above all regular content', () => {

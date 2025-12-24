@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Z_CLASS } from '@/lib/z-index';
 import { Button } from '@/components/ui/button';
 import { ModeMenu } from '@/components/ModeMenu';
 import { Menu, X, Bot, Sparkles } from 'lucide-react';
@@ -30,10 +31,10 @@ export default function AgentsPage() {
       {showMenu && (
         <>
           <div 
-            className="fixed inset-0 bg-black/50 z-40"
+            className={`fixed inset-0 bg-black/50 ${Z_CLASS.SIDEBAR_BACKDROP}`}
             onClick={() => setShowMenu(false)}
           />
-          <div className="fixed left-0 top-0 bottom-0 w-72 bg-background border-r border-border z-50 overflow-y-auto">
+          <div className={`fixed left-0 top-0 bottom-0 w-72 bg-background border-r border-border ${Z_CLASS.SIDEBAR_MENU} overflow-y-auto`}>
             <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="text-lg font-semibold">Menu</h2>
               <Button
