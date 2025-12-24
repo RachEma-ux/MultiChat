@@ -335,3 +335,11 @@
 ## Bug Fix - Theme Label in Hamburger Menu
 - [x] Fix "Light Mode/Dark Mode" label to "Theme" in hamburger menu (FMF violation: uses reserved term "Mode")
 - [x] Fix: Mobile maximized chat window covers app header - should start below header
+
+## Chat Window Templates Feature
+- [x] Create template types and constants (ChatWindowTemplate interface)
+- [x] Create "Modern" template component using ChatControlBox (blue/cyan theme)
+- [x] Create ThemesSettingsModal for template management
+- [x] Add "Themes" option to wheel settings menu (SettingsMenu.tsx)
+- [x] Wire template selection to FloatingChatWindow
+- [x] Add "Customize" coming soon placeholder in ThemesSettingsModal

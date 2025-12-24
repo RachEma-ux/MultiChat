@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Pin, Minus, Maximize2, Minimize2, X, MessageSquare, GripHorizontal, Plus, Pencil, Trash2, Star, Download, Upload, Share2, BarChart2, Layout, Search, Tag, Copy, FolderOpen, CheckSquare, MoreHorizontal } from 'lucide-react';
 import { ChatFooter } from '@/components/ChatFooter';
+import { ChatControlBox } from '@/components/ChatControlBox';
 import { ModelSelector } from './ModelSelector';
 import { SettingsMenu } from './SettingsMenu';
 import { PresetEditorModal } from './PresetEditorModal';
@@ -28,6 +29,8 @@ import { PresetSortDropdown } from './PresetSortDropdown';
 import { PresetStatsDashboard } from './PresetStatsDashboard';
 import { CustomCategoryModal } from './CustomCategoryModal';
 import CategoriesSettingsModal from './CategoriesSettingsModal';
+import { ThemesSettingsModal } from './ThemesSettingsModal';
+import { ChatWindowTemplate, getSelectedTemplateId, setSelectedTemplateId, getTemplate, getHeaderClasses, getWindowClasses, getAccentClasses } from '@/lib/chat-templates';
 import { BulkOperationsBar } from './BulkOperationsBar';
 import { useKeyboardShortcuts, SHORTCUT_KEYS } from '@/hooks/useKeyboardShortcuts';
 import { AI_PROVIDERS, MODEL_PRESETS } from '@/lib/ai-providers';
@@ -210,6 +213,9 @@ export function FloatingChatWindow({
   const [showCustomCategoryModal, setShowCustomCategoryModal] = useState(false);
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [showCategoriesSettings, setShowCategoriesSettings] = useState(false);
+  const [showThemesSettings, setShowThemesSettings] = useState(false);
+  const [currentTemplateId, setCurrentTemplateId] = useState(() => getSelectedTemplateId());
+  const currentTemplate = getTemplate(currentTemplateId);
   
   // ============================================
   // STATE - Presets
@@ -930,14 +936,14 @@ export function FloatingChatWindow({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className={`fixed bg-background border border-border rounded-lg shadow-2xl overflow-hidden flex flex-col ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
+        className={`${getWindowClasses(currentTemplate)} ${isDragging ? 'cursor-grabbing' : ''} ${isResizing ? 'select-none' : ''}`}
         style={{ ...windowStyle, zIndex }}
         onMouseDown={bringToFront}
         onTouchStart={bringToFront}
       >
         {/* Header */}
         <div 
-          className="flex items-center justify-between px-3 py-2 border-b border-border bg-card shrink-0"
+          className={`${getHeaderClasses(currentTemplate)} shrink-0`}
           onDoubleClick={(e) => {
             const target = e.target as HTMLElement;
             if (target.tagName !== 'INPUT' && !target.closest('.no-drag')) {
@@ -1358,41 +1364,75 @@ export function FloatingChatWindow({
           )}
         </div>
 
-        {/* Footer */}
-        <ChatFooter
-          selectedModelsCount={selectedModels.length}
-          inputMessage={inputMessage}
-          onInputChange={setInputMessage}
-          onModelsClick={() => {
-            setShowPresets(false);
-            setShowModelSelector(!showModelSelector);
-          }}
-          onSettingsClick={() => setShowSettings(!showSettings)}
-          onSummarizerClick={handleSummarizer}
-          onPresetsClick={() => {
-            setShowPresets(!showPresets);
-            setShowModelSelector(false);
-          }}
-          onNewChat={clearChat}
-          onSave={saveConversation}
-          onSend={handleSend}
-          onAttach={handleAttach}
-          isLoading={isLoading}
-          onClearChat={clearChat}
-          onDeleteChat={deleteChat}
-          onRenameChat={renameChat}
-          onShowAnalytics={() => setShowAnalytics(true)}
-          onExportData={exportConversation}
-          onPresetsSettings={() => setShowPresetsManagement(true)}
-          onCategoriesSettings={() => setShowCategoriesSettings(true)}
-          messagesCount={messages.length}
-          attachments={attachments}
-          onRemoveAttachment={removeAttachment}
-          savedConversations={savedConversations}
-          onLoadConversation={loadConversation}
-          onViewAllSaved={() => setShowSavedConversationsModal(true)}
-          archivedCount={archivedConversations.length}
-        />
+        {/* Footer - Render based on template */}
+        {currentTemplate.footerComponent === 'ChatControlBox' ? (
+          <ChatControlBox
+            messages={messages.map(m => ({
+              id: m.id,
+              type: m.type === 'typing' ? 'ai' : m.type,
+              content: m.content,
+              timestamp: m.timestamp,
+              provider: m.provider,
+              model: m.model,
+            }))}
+            onMessagesChange={(newMessages) => {
+              setMessages(newMessages.map(m => ({
+                id: typeof m.id === 'number' ? m.id : parseInt(String(m.id)) || Date.now(),
+                type: m.type as 'user' | 'ai' | 'typing',
+                content: m.content,
+                timestamp: m.timestamp,
+                provider: m.provider,
+                model: m.model,
+              })));
+            }}
+            selectedModels={selectedModels}
+            onModelsChange={setSelectedModels}
+            onSendMessage={(text, attachments) => {
+              setInputMessage(text);
+              handleSend();
+            }}
+            conversationTitle={conversationTitle}
+            onTitleChange={(title) => handleRename(title)}
+            isLoading={isLoading}
+            onNewChat={clearChat}
+            onSynthesize={handleSummarizer}
+          />
+        ) : (
+          <ChatFooter
+            selectedModelsCount={selectedModels.length}
+            inputMessage={inputMessage}
+            onInputChange={setInputMessage}
+            onModelsClick={() => {
+              setShowPresets(false);
+              setShowModelSelector(!showModelSelector);
+            }}
+            onSettingsClick={() => setShowSettings(!showSettings)}
+            onSummarizerClick={handleSummarizer}
+            onPresetsClick={() => {
+              setShowPresets(!showPresets);
+              setShowModelSelector(false);
+            }}
+            onNewChat={clearChat}
+            onSave={saveConversation}
+            onSend={handleSend}
+            onAttach={handleAttach}
+            isLoading={isLoading}
+            onClearChat={clearChat}
+            onDeleteChat={deleteChat}
+            onRenameChat={renameChat}
+            onShowAnalytics={() => setShowAnalytics(true)}
+            onExportData={exportConversation}
+            onPresetsSettings={() => setShowPresetsManagement(true)}
+            onCategoriesSettings={() => setShowCategoriesSettings(true)}
+            messagesCount={messages.length}
+            attachments={attachments}
+            onRemoveAttachment={removeAttachment}
+            savedConversations={savedConversations}
+            onLoadConversation={loadConversation}
+            onViewAllSaved={() => setShowSavedConversationsModal(true)}
+            archivedCount={archivedConversations.length}
+          />
+        )}
         
         {/* Resize Handles */}
         {!isMaximized && (
@@ -1413,7 +1453,7 @@ export function FloatingChatWindow({
       </motion.div>
 
       {/* Modals */}
-      {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} onPresetsManagement={() => setShowPresetsManagement(true)} onCategoriesSettings={() => setShowCategoriesSettings(true)} />}
+      {showSettings && <SettingsMenu onClose={() => setShowSettings(false)} onPresetsManagement={() => setShowPresetsManagement(true)} onCategoriesSettings={() => setShowCategoriesSettings(true)} onThemesSettings={() => setShowThemesSettings(true)} />}
       
       {showAnalytics && (
         <AnalyticsPanel 
@@ -1541,6 +1581,17 @@ export function FloatingChatWindow({
         <CategoriesSettingsModal
           isOpen={showCategoriesSettings}
           onClose={() => setShowCategoriesSettings(false)}
+        />
+      )}
+      
+      {showThemesSettings && (
+        <ThemesSettingsModal
+          isOpen={showThemesSettings}
+          onClose={() => setShowThemesSettings(false)}
+          onTemplateChange={(templateId) => {
+            setCurrentTemplateId(templateId);
+            setSelectedTemplateId(templateId);
+          }}
         />
       )}
     </>

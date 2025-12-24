@@ -5,9 +5,15 @@ interface SettingsMenuProps {
   onClose: () => void;
   onPresetsManagement?: () => void;
   onCategoriesSettings?: () => void;
+  onThemesSettings?: () => void;
 }
 
-export function SettingsMenu({ onClose, onPresetsManagement, onCategoriesSettings }: SettingsMenuProps) {
+export function SettingsMenu({ 
+  onClose, 
+  onPresetsManagement, 
+  onCategoriesSettings,
+  onThemesSettings 
+}: SettingsMenuProps) {
   return (
     <>
       <div 
@@ -44,13 +50,18 @@ export function SettingsMenu({ onClose, onPresetsManagement, onCategoriesSetting
         )}
         <button
           onClick={() => {
-            toast.info('Chat theme settings coming soon');
-            onClose();
+            if (onThemesSettings) {
+              onThemesSettings();
+              onClose();
+            } else {
+              toast.info('Chat theme settings coming soon');
+              onClose();
+            }
           }}
           className="w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors text-left"
         >
           <Palette className="h-4 w-4" />
-          <span className="text-sm">Chat Theme</span>
+          <span className="text-sm">Themes</span>
         </button>
         <button
           onClick={() => {
