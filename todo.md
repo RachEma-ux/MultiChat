@@ -357,3 +357,11 @@
 - [x] Update Chat Theme button in ChatControlBox to call onThemesSettings callback
 - [x] Update FloatingChatWindow to pass onThemesSettings to ChatControlBox
 - [x] Test switching from Modern to Classic template
+
+
+## Modern Template Visual Styling Fix
+- [x] Add template prop to ChatControlBox component
+- [x] Apply template-specific styling (cyan accents, gradient backgrounds) to ChatControlBox
+- [x] Pass currentTemplate from FloatingChatWindow to ChatControlBox
+- [x] Update button colors for Modern template (cyan instead of default)
+- [x] Test visual difference between Classic and Modern templates

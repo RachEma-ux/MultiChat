@@ -1397,6 +1397,7 @@ export function FloatingChatWindow({
             onNewChat={clearChat}
             onSynthesize={handleSummarizer}
             onThemesSettings={() => setShowThemesSettings(true)}
+            template={currentTemplate}
           />
         ) : (
           <ChatFooter

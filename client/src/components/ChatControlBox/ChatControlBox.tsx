@@ -62,6 +62,7 @@ import { SavedConversation as ChatFooterSavedConversation } from '../ChatFooter'
 import { QuickPreset, loadQuickPresets, saveQuickPresets } from '@/lib/quick-presets';
 import { MODEL_PRESETS, AI_PROVIDERS } from '@/lib/ai-providers';
 import { useTheme } from '@/contexts/ThemeContext';
+import { ChatWindowTemplate, getAccentClasses, getButtonClasses } from '@/lib/chat-templates';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -159,6 +160,8 @@ export interface ChatControlBoxProps {
   onSynthesize?: () => void;
   /** Callback when themes settings is requested */
   onThemesSettings?: () => void;
+  /** Current template for styling */
+  template?: ChatWindowTemplate;
 }
 
 // =============================================================================
@@ -181,7 +184,10 @@ export function ChatControlBox({
   onNewChat,
   onSynthesize,
   onThemesSettings,
+  template,
 }: ChatControlBoxProps) {
+  // Determine if using modern (cyan) styling
+  const isModernTemplate = template?.accentColor === 'cyan';
   // =========================================================================
   // STATE MANAGEMENT
   // =========================================================================
@@ -581,8 +587,23 @@ export function ChatControlBox({
     ? 'Select at least one AI model to send a message' 
     : 'Type your message...';
 
+  // Container classes based on template
+  const containerClasses = isModernTemplate
+    ? 'border-t border-cyan-700/50 bg-gradient-to-r from-cyan-950/80 to-slate-900/90 rounded-b-lg'
+    : 'border-t border-border bg-card rounded-b-lg';
+
+  // Button classes based on template
+  const buttonClasses = isModernTemplate
+    ? 'border-cyan-700/50 hover:bg-cyan-900/50 text-cyan-300'
+    : '';
+
+  // Send button classes based on template
+  const sendButtonClasses = isModernTemplate
+    ? 'bg-cyan-600 hover:bg-cyan-500 text-white'
+    : 'bg-primary hover:bg-primary/90 text-primary-foreground';
+
   return (
-    <div className="border-t border-border bg-card rounded-b-lg">
+    <div className={containerClasses}>
       {/* Analytics Panel */}
       {showAnalytics && (
         <AnalyticsPanel 
@@ -644,7 +665,7 @@ export function ChatControlBox({
               variant="outline"
               size="icon"
               onClick={() => setShowFooterMenu(!showFooterMenu)}
-              className="h-7 w-7 shrink-0"
+              className={`h-7 w-7 shrink-0 ${buttonClasses}`}
               title="Menu"
             >
               <Menu className="h-3.5 w-3.5" />
@@ -743,7 +764,7 @@ export function ChatControlBox({
             variant="outline"
             size="icon"
             onClick={handleNewChat}
-            className="h-7 w-7 shrink-0"
+            className={`h-7 w-7 shrink-0 ${buttonClasses}`}
             title="New Chat"
           >
             <Plus className="h-3.5 w-3.5" />
@@ -754,7 +775,7 @@ export function ChatControlBox({
             variant="outline"
             size="sm"
             onClick={() => { setShowModelsPanel(!showModelsPanel); setShowPresetsPanel(false); }}
-            className="text-[10px] h-7 px-2 shrink-0"
+            className={`text-[10px] h-7 px-2 shrink-0 ${buttonClasses}`}
           >
             {selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}
           </Button>
@@ -765,7 +786,7 @@ export function ChatControlBox({
               variant="outline"
               size="icon"
               onClick={onSynthesize}
-              className="h-7 w-7 shrink-0"
+              className={`h-7 w-7 shrink-0 ${buttonClasses}`}
               title="Generate Synthesis"
             >
               <Sparkles className="h-3.5 w-3.5" />
@@ -778,7 +799,7 @@ export function ChatControlBox({
               variant="outline"
               size="icon"
               onClick={() => setShowSettings(!showSettings)}
-              className="h-7 w-7 shrink-0"
+              className={`h-7 w-7 shrink-0 ${buttonClasses}`}
               title="Settings"
             >
               <Settings className="h-3.5 w-3.5" />
@@ -851,7 +872,7 @@ export function ChatControlBox({
             onClick={handleSaveConversation}
             disabled={messages.length === 0}
             title="Save Conversation"
-            className="h-7 w-7 shrink-0"
+            className={`h-7 w-7 shrink-0 ${buttonClasses}`}
           >
             <Save className="h-3.5 w-3.5" />
           </Button>
@@ -861,7 +882,7 @@ export function ChatControlBox({
             variant="outline"
             size="sm"
             onClick={() => { setShowPresetsPanel(!showPresetsPanel); setShowModelsPanel(false); }}
-            className="text-[10px] h-7 px-2 shrink-0"
+            className={`text-[10px] h-7 px-2 shrink-0 ${buttonClasses}`}
           >
             Presets
           </Button>
@@ -883,7 +904,7 @@ export function ChatControlBox({
             size="icon"
             onClick={() => fileInputRef.current?.click()}
             title="Attach files"
-            className="shrink-0 h-10 w-10"
+            className={`shrink-0 h-10 w-10 ${buttonClasses}`}
           >
             <Paperclip className="h-4 w-4" />
           </Button>
@@ -896,7 +917,11 @@ export function ChatControlBox({
               placeholder={placeholder || defaultPlaceholder}
               disabled={selectedModels.length === 0}
               rows={1}
-              className="w-full pl-3 pr-16 py-2.5 rounded-md border border-input bg-background text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`w-full pl-3 pr-16 py-2.5 rounded-md border text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                isModernTemplate 
+                  ? 'border-cyan-700/50 bg-slate-900/80 text-cyan-100 placeholder:text-cyan-400/50 focus-visible:ring-cyan-500' 
+                  : 'border-input bg-background focus-visible:ring-ring'
+              }`}
               style={{ lineHeight: '1.5', height: '40px', minHeight: '40px', maxHeight: '200px', overflowY: 'hidden' }}
             />
             
@@ -933,7 +958,7 @@ export function ChatControlBox({
             onClick={handleSend}
             disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
             size="icon"
-            className="shrink-0 h-10 w-10"
+            className={`shrink-0 h-10 w-10 ${sendButtonClasses}`}
           >
             <Send className="h-4 w-4" />
           </Button>
