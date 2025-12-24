@@ -216,6 +216,32 @@ export function ChatControlBox({
   const inputMessageRef = useRef(inputMessage);
 
   // =========================================================================
+  // TEXTAREA AUTO-GROW
+  // =========================================================================
+  
+  const adjustTextareaHeight = useCallback(() => {
+    if (textareaRef.current) {
+      // Reset height to allow shrinking
+      textareaRef.current.style.height = '40px';
+      
+      // Use requestAnimationFrame to ensure DOM has updated
+      requestAnimationFrame(() => {
+        if (textareaRef.current) {
+          const scrollHeight = textareaRef.current.scrollHeight;
+          textareaRef.current.style.height = `${Math.min(scrollHeight, 200)}px`;
+          
+          // Enable scrolling when max height reached
+          if (scrollHeight > 200) {
+            textareaRef.current.style.overflowY = 'auto';
+          } else {
+            textareaRef.current.style.overflowY = 'hidden';
+          }
+        }
+      });
+    }
+  }, []);
+
+  // =========================================================================
   // EFFECTS
   // =========================================================================
   
@@ -231,10 +257,10 @@ export function ChatControlBox({
     loadConversationsFromStorage();
   }, []);
   
-  // Auto-grow textarea
+  // Auto-grow textarea - call adjustTextareaHeight whenever inputMessage changes
   useEffect(() => {
     adjustTextareaHeight();
-  }, [inputMessage]);
+  }, [inputMessage, adjustTextareaHeight]);
 
   // =========================================================================
   // STORAGE FUNCTIONS
@@ -283,18 +309,6 @@ export function ChatControlBox({
   // =========================================================================
   // HANDLERS
   // =========================================================================
-  
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = '36px';
-      const scrollHeight = textarea.scrollHeight;
-      const maxHeight = 120;
-      const newHeight = Math.min(scrollHeight, maxHeight);
-      textarea.style.height = `${newHeight}px`;
-      textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
-    }
-  }, []);
   
   const handleSend = useCallback(() => {
     if (!inputMessage.trim() || selectedModels.length === 0 || isLoading) return;
@@ -813,10 +827,10 @@ export function ChatControlBox({
               placeholder={placeholder || defaultPlaceholder}
               disabled={selectedModels.length === 0}
               rows={1}
-              className="w-full pl-3 pr-16 py-2.5 rounded-full bg-zinc-200 text-zinc-800 placeholder:text-zinc-500 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
-              style={{ lineHeight: '1.5', height: '40px', minHeight: '40px', maxHeight: '120px', overflowY: 'hidden' }}
+              className="w-full pl-3 pr-16 py-2.5 rounded-md bg-zinc-200 text-zinc-800 placeholder:text-zinc-500 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-800 disabled:cursor-not-allowed disabled:opacity-50"
+              style={{ lineHeight: '1.5', height: '40px', minHeight: '40px', maxHeight: '200px', overflowY: 'hidden' }}
             />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+            <div className="absolute right-2 bottom-2 flex items-center gap-1">
               {/* Microphone Icon */}
               {!hideVoiceInput && (
                 <button

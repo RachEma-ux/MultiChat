@@ -398,3 +398,10 @@
 - [x] Copy working message input from ChatFooter (Classic theme)
 - [x] Ensure mobile virtual keyboard shows correctly
 - [x] Test on mobile device
+
+
+## ChatControlBox Textarea Auto-Grow Fix (Dec 24)
+- [x] Fix textarea not auto-growing on multiple lines
+- [x] Copy exact textarea behavior from ChatFooter (Classic theme)
+- [x] Ensure multi-line input works properly
+- [x] Test on mobile device
