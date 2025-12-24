@@ -316,3 +316,6 @@
 - [x] Replace Theme with Chat Theme in wheel settings menu
 - [x] Implement global theme toggle in hamburger menu
 - [ ] Implement chat-specific theme in wheel settings (shows 'coming soon')
+
+## Fix-Modify Framework (FMF)
+- [x] Add Fix-Modify Framework (FMF) to knowledge base (docs/FIX_MODIFY_FRAMEWORK.md)
