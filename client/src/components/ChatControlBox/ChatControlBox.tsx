@@ -526,10 +526,13 @@ export function ChatControlBox({
   // RENDER
   // =========================================================================
   
-  const defaultPlaceholder = 'Type your message';
+  // Dynamic placeholder based on model selection
+  const defaultPlaceholder = selectedModels.length === 0 
+    ? 'Select at least one AI model to send a message' 
+    : 'Type your message...';
 
   return (
-    <div className="bg-zinc-800 rounded-2xl border border-zinc-700/50 mx-2 mb-2">
+    <div className="bg-zinc-900/95 rounded-2xl border border-cyan-500/30 mx-2 mb-2 shadow-[0_0_15px_rgba(0,212,255,0.15)]">
       {/* Analytics Panel */}
       {showAnalytics && (
         <AnalyticsPanel 
@@ -562,8 +565,18 @@ export function ChatControlBox({
         />
       )}
       
-      {/* Main Content - Mobile-responsive two-row layout */}
-      <div className="p-3 space-y-2">
+      {/* Empty State Indicator */}
+      {selectedModels.length === 0 && (
+        <div className="px-3 pt-2 pb-0">
+          <div className="flex items-center gap-2 text-xs text-amber-400/80 bg-amber-500/10 rounded-lg px-3 py-2 border border-amber-500/20">
+            <span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
+            <span>Select AI models to start chatting</span>
+          </div>
+        </div>
+      )}
+      
+      {/* Main Content - Desktop: single row, Mobile: two rows */}
+      <div className="p-3">
         {/* Attachments Preview */}
         {attachments.length > 0 && (
           <div className="flex flex-wrap gap-2">
@@ -582,13 +595,13 @@ export function ChatControlBox({
           </div>
         )}
         
-        {/* Control Buttons Row - Toolbar on top (mobile: full width, desktop: centered) */}
-        <div className="flex items-center gap-1.5 md:justify-center justify-between flex-wrap">
+        {/* Desktop: Single row with all controls inline | Mobile: Two rows */}
+        <div className={`flex items-center ${isMobile ? 'flex-wrap justify-between gap-1.5 mb-2' : 'flex-nowrap gap-2'}`}>
           {/* Hamburger Menu */}
           <div className="relative">
             <button
               onClick={() => setShowFooterMenu(!showFooterMenu)}
-              className="h-8 w-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              className="h-8 w-8 flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-colors"
               title="Menu"
             >
               <Menu className="h-5 w-5" />
@@ -685,7 +698,7 @@ export function ChatControlBox({
           {/* Plus Button */}
           <button
             onClick={handleNewChat}
-            className="h-8 w-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+            className="h-8 w-8 flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-colors"
             title="New Chat"
           >
             <Plus className="h-5 w-5" />
@@ -694,7 +707,7 @@ export function ChatControlBox({
           {/* Models Button - Blue Pill with solid fill */}
           <button
             onClick={() => { setShowModelsPanel(!showModelsPanel); setShowPresetsPanel(false); }}
-            className="h-8 px-4 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded-full transition-colors"
+            className="h-8 px-4 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-1.5"
           >
             {selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}
           </button>
@@ -705,8 +718,8 @@ export function ChatControlBox({
               onClick={onSynthesize}
               className={`h-8 w-8 flex items-center justify-center transition-colors ${
                 selectedModels.length > 0 
-                  ? 'text-blue-400 hover:text-blue-300' 
-                  : 'text-zinc-500'
+                  ? 'text-cyan-400 hover:text-cyan-300' 
+                  : 'text-zinc-600'
               }`}
               title="Generate Synthesis"
               disabled={selectedModels.length === 0}
@@ -719,7 +732,7 @@ export function ChatControlBox({
           <div className="relative">
             <button
               onClick={() => setShowSettings(!showSettings)}
-              className="h-8 w-8 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              className="h-8 w-8 flex items-center justify-center text-cyan-400 hover:text-cyan-300 transition-colors"
               title="Settings"
             >
               <Settings className="h-5 w-5" />
@@ -792,7 +805,7 @@ export function ChatControlBox({
             className={`h-8 w-8 flex items-center justify-center transition-colors ${
               messages.length === 0 
                 ? 'text-zinc-600 cursor-not-allowed' 
-                : 'text-zinc-400 hover:text-white'
+                : 'text-cyan-400 hover:text-cyan-300'
             }`}
             title="Save Conversation"
           >
@@ -802,14 +815,14 @@ export function ChatControlBox({
           {/* Presets Button - Light background pill */}
           <button
             onClick={() => { setShowPresetsPanel(!showPresetsPanel); setShowModelsPanel(false); }}
-            className="h-8 px-4 bg-zinc-600 hover:bg-zinc-500 text-zinc-200 text-sm font-medium rounded-full transition-colors"
+            className="h-8 px-4 bg-zinc-700/80 hover:bg-zinc-600 text-cyan-400 text-sm font-medium rounded-full transition-colors border border-cyan-500/30"
           >
             Presets
           </button>
         </div>
         
         {/* Message Input Row - Mobile: full-width rounded input with icons inside */}
-        <div className="flex items-center gap-2">
+        <div className={`flex items-center gap-2 ${isMobile ? '' : 'flex-1'}`}>
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -823,7 +836,7 @@ export function ChatControlBox({
           {!isMobile && (
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-zinc-700 text-zinc-400 hover:text-white hover:bg-zinc-600 transition-colors"
+              className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-zinc-800 border border-cyan-500/30 text-cyan-400 hover:text-cyan-300 hover:bg-zinc-700 transition-colors"
               title="Attach files"
             >
               <Paperclip className="h-4 w-4" />
@@ -850,8 +863,8 @@ export function ChatControlBox({
               placeholder={placeholder || defaultPlaceholder}
               disabled={selectedModels.length === 0}
               rows={1}
-              className={`w-full py-2.5 rounded-full bg-zinc-200 text-zinc-800 placeholder:text-zinc-500 text-sm resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-800 disabled:cursor-not-allowed disabled:opacity-50 ${
-                isMobile ? 'pl-10 pr-12' : 'pl-3 pr-16'
+              className={`w-full py-2.5 rounded-2xl bg-zinc-800/80 text-zinc-100 placeholder:text-zinc-500 text-sm resize-none border border-zinc-700/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:border-cyan-500/50 disabled:cursor-not-allowed disabled:opacity-50 ${
+                isMobile ? 'pl-16 pr-20' : 'pl-4 pr-24'
               }`}
               style={{ lineHeight: '1.5', minHeight: '40px', maxHeight: '200px' }}
             />
@@ -861,7 +874,7 @@ export function ChatControlBox({
               <div className="absolute left-2 bottom-2 flex items-center gap-1">
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="h-7 w-7 flex items-center justify-center rounded-full transition-colors text-zinc-500 hover:text-zinc-700"
+                  className="h-7 w-7 flex items-center justify-center rounded-full transition-colors text-cyan-400 hover:text-cyan-300"
                   title="Attach files"
                 >
                   <Paperclip className="h-4 w-4" />
@@ -871,7 +884,7 @@ export function ChatControlBox({
                   <button
                     onClick={() => setShowConnectorsStore(true)}
                     className={`h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
-                      showConnectorsStore ? 'text-blue-500' : 'text-zinc-500 hover:text-zinc-700'
+                      showConnectorsStore ? 'text-cyan-300' : 'text-cyan-400 hover:text-cyan-300'
                     }`}
                     title="Connectors Store"
                   >
@@ -890,7 +903,7 @@ export function ChatControlBox({
                   className={`h-7 w-7 flex items-center justify-center rounded-full transition-colors ${
                     isListening 
                       ? 'text-red-500 animate-pulse' 
-                      : 'text-zinc-500 hover:text-zinc-700'
+                      : 'text-cyan-400 hover:text-cyan-300'
                   }`}
                   title="Voice Input"
                 >
@@ -916,7 +929,7 @@ export function ChatControlBox({
                 <button
                   onClick={handleSend}
                   disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
-                  className="h-7 w-7 flex items-center justify-center rounded-full transition-colors text-zinc-500 hover:text-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-7 w-7 flex items-center justify-center rounded-full bg-blue-500 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-600"
                   title="Send message"
                 >
                   <ArrowUp className="h-4 w-4" strokeWidth={2.125} />
@@ -930,7 +943,7 @@ export function ChatControlBox({
             <button
               onClick={handleSend}
               disabled={!inputMessage.trim() || selectedModels.length === 0 || isLoading}
-              className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full transition-colors text-zinc-500 hover:text-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-500 hover:bg-blue-400 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:bg-zinc-700"
               title="Send message"
             >
               <ArrowUp className="h-5 w-5" strokeWidth={2.125} />

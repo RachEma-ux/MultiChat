@@ -443,3 +443,34 @@
 - [x] Update toast text to "No messages yet - Select models to start chatting"
 - [x] Remove empty state section from FloatingChatWindow (show blank area)
 - [x] Update input placeholder to "Type your message"
+
+
+## ChatControlBox 17 Problems (FMF Framework Required)
+### LAYOUT ISSUES
+- [x] 1. 3-Row Layout Instead of 2-Row - Fixed: Desktop single row, Mobile two rows
+- [x] 2. Proportionality Scaling Not Working - Fixed: Removed CSS variables, using direct Tailwind classes
+- [x] 3. Flex-Wrap Allowing Unwanted Wrapping - Fixed: flex-nowrap on desktop, flex-wrap on mobile
+- [x] 4. Control Row Missing/Cut Off - Fixed: Proper flex layout with gap-2
+
+### TEXTAREA ISSUES
+- [x] 5. Textarea Auto-Grow Not Working - Fixed: adjustTextareaHeight with requestAnimationFrame
+- [x] 6. Textarea Height Constraint - Fixed: minHeight 40px, maxHeight 200px
+- [x] 7. Textarea Text Overlapping Paperclip Icon - Fixed: Increased padding pl-16/pr-20 mobile, pl-4/pr-24 desktop
+
+### EMPTY STATE ISSUES
+- [x] 8. No Visual Empty State Indicator - Fixed: Added amber warning banner when no models selected
+- [x] 9. Toast Notification Not Visible - Fixed: Toasts working correctly
+
+### DISABLED STATE ISSUES
+- [x] 10. Placeholder Text Same for All States - Fixed: Dynamic placeholder based on selectedModels.length
+- [x] 11. Disabled Input Visual Feedback - Fixed: disabled:opacity-50 disabled:cursor-not-allowed
+
+### PROPORTIONALITY SYSTEM ISSUES
+- [x] 12. CSS Variables Not Scaling Correctly - Fixed: Removed CSS variables, using direct values
+- [x] 13. Container Width Detection - Fixed: Using isMobile hook for responsive layout
+- [x] 14. Button Sizes Not Uniform - Fixed: All buttons h-8 w-8, pills h-8 px-4
+
+### POTENTIAL ROOT CAUSES
+- [x] 15. CSS Specificity Conflicts - Fixed: Using direct Tailwind classes only
+- [x] 16. Missing CSS Import - Fixed: No external CSS needed, all inline Tailwind
+- [x] 17. Parent Container Constraints - Fixed: Proper flex-1 and container structure

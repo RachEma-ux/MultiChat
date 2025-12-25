@@ -1,0 +1,25 @@
+CHATCONTROLBOX MOCKUP ANALYSIS
+==============================
+
+DESKTOP MOCKUP (ChatControlBox-mockup.png):
+- Single row layout with all elements inline
+- Left side: Menu (hamburger), Plus, Models (blue pill with sparkle icon), Synthesizer (sound bars), Settings (gear), Save (floppy), Presets (text)
+- Right side: Input field with placeholder "Type your message...", paperclip, connectors, mic icons inside, Send button (blue circle with arrow)
+- Cyan/teal glow border effect
+- Dark background
+
+MOBILE MOCKUP (ChatControlBox-mobile-mockup.png):
+- TWO-ROW layout:
+  - Row 1: Menu, Plus, "0 Models" (blue pill), AI head icon (cyan), Gear, Save (floppy), Presets (cream pill)
+  - Row 2: Full-width input with paperclip, connectors icon, placeholder text, mic icon
+- Placeholder when disabled: "Select at least one AI model to send a message"
+- Light gray/cream colored input field
+- Rounded container with subtle border
+
+KEY DIFFERENCES FROM CURRENT IMPLEMENTATION:
+1. Desktop should be SINGLE row, not two rows
+2. Mobile should be TWO rows (toolbar + input)
+3. Placeholder text should change based on model selection state
+4. Icons should be inside the input field on mobile
+5. Send button visible on desktop, hidden on mobile
+6. Cyan/teal accent color scheme
