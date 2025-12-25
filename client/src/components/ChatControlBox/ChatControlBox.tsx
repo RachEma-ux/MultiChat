@@ -37,8 +37,8 @@ import React from 'react';
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useResponsive } from '@/hooks/useResponsive';
 import { Button } from '@/components/ui/button';
-import { 
-  Menu, Plus, Settings, Save, Paperclip, Send, Bot,
+import {
+  Menu, Plus, Settings, Save, Paperclip, ArrowUp, Bot,
   Edit, Trash2, BarChart, MessageSquare, Archive, Download, 
   X, Image as ImageIcon, Zap, Mic, Plug, FolderOpen, Sun, Moon, Globe, Palette 
 } from 'lucide-react';
@@ -921,7 +921,7 @@ export function ChatControlBox({
                   className="h-7 w-7 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   title="Send message"
                 >
-                  <Send className="h-3.5 w-3.5" />
+                  <ArrowUp className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
@@ -935,7 +935,7 @@ export function ChatControlBox({
               className="shrink-0 h-10 w-10 flex items-center justify-center rounded-full bg-blue-500 text-white hover:bg-blue-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Send message"
             >
-              <Send className="h-4 w-4" />
+              <ArrowUp className="h-4 w-4" />
             </button>
           )}
         </div>

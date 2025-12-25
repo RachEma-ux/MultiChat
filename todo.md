@@ -415,3 +415,6 @@
 
 ## ChatControlBox Mobile Enhancement
 - [x] Add Send button to mobile layout (visible after mic icon)
+
+## Send Button Icon Update
+- [x] Change Send button icon from right arrow to upward arrow (like Manus)
