@@ -435,3 +435,10 @@
 - [x] Step 4: Document proportionality rule in `ChatControlBox-Documentation.md`
 - [x] Step 5: Add visual regression test for proportions
 - [x] Step 6: Add Ratio Table to Responsiveness section in documentation
+
+## ChatControlBox Responsive Viewport Detection
+- [x] Implement viewport-aware responsive scaling for ChatControlBox
+- [x] Add CSS media queries for mobile breakpoints (360px, 375px, 390px, 414px)
+- [x] Scale master dimension based on viewport width
+- [x] Test on mobile viewport sizes
+- [x] Update documentation with responsive behavior

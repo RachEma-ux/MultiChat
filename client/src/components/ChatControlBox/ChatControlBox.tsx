@@ -537,7 +537,7 @@ export function ChatControlBox({
 
   return (
     <div 
-      className="chat-control-box bg-zinc-800 border border-zinc-700/50 mx-2 mb-2"
+      className="chat-control-box bg-zinc-800 border border-zinc-700/50 w-full max-w-full overflow-hidden"
       style={cssVars}
     >
       {/* Analytics Panel */}
