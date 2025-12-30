@@ -445,9 +445,12 @@
 - [x] Update input placeholder to "Type your message"
 
 
-## ChatControlBox Spacing Optimization
+## ChatControlBox Spacing & Styling Optimization
 - [x] Decrease gap between toolbar icons from gap-2 to gap-1 (desktop and mobile)
-- [x] Tests passing (227/227)
+- [x] Decrease spacing in input row from gap-2 to gap-1 (paperclip, textarea, send button)
+- [x] Decrease spacing inside textarea icons from gap-1 to gap-0.5 (mic, connectors, send)
+- [x] Adjust Presets button styling: reduced padding (px-4 → px-3), smaller text (text-sm → text-xs), bolder font (font-medium → font-semibold)
+- [x] All 227 tests passing
 
 ## ChatControlBox 17 Problems (FMF Framework Required)
 ### LAYOUT ISSUES

@@ -815,14 +815,14 @@ export function ChatControlBox({
           {/* Presets Button - Light background pill */}
           <button
             onClick={() => { setShowPresetsPanel(!showPresetsPanel); setShowModelsPanel(false); }}
-            className="h-8 px-4 bg-zinc-700/80 hover:bg-zinc-600 text-cyan-400 text-sm font-medium rounded-full transition-colors border border-cyan-500/30"
+            className="h-8 px-3 bg-zinc-700/80 hover:bg-zinc-600 text-cyan-400 text-xs font-semibold rounded-full transition-colors border border-cyan-500/30 whitespace-nowrap"
           >
             Presets
           </button>
         </div>
         
         {/* Message Input Row - Mobile: full-width rounded input with icons inside */}
-        <div className={`flex items-center gap-2 ${isMobile ? '' : 'flex-1'}`}>
+        <div className={`flex items-center gap-1 ${isMobile ? '' : 'flex-1'}`}>
           {/* Hidden file input */}
           <input
             ref={fileInputRef}
@@ -871,7 +871,7 @@ export function ChatControlBox({
             
             {/* Mobile: Paperclip inside input on left */}
             {isMobile && (
-              <div className="absolute left-2 bottom-2 flex items-center gap-1">
+              <div className="absolute left-2 bottom-2 flex items-center gap-0.5">
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="h-7 w-7 flex items-center justify-center rounded-full transition-colors text-cyan-400 hover:text-cyan-300"
@@ -895,7 +895,7 @@ export function ChatControlBox({
             )}
             
             {/* Icons inside input on right */}
-            <div className="absolute right-2 bottom-2 flex items-center gap-1">
+            <div className="absolute right-2 bottom-2 flex items-center gap-0.5">
               {/* Microphone Icon */}
               {!hideVoiceInput && (
                 <button
