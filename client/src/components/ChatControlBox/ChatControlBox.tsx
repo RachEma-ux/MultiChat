@@ -707,7 +707,7 @@ export function ChatControlBox({
           {/* Models Button - Blue Pill with solid fill */}
           <button
             onClick={() => { setShowModelsPanel(!showModelsPanel); setShowPresetsPanel(false); }}
-            className="h-8 px-4 bg-blue-500 hover:bg-blue-400 text-white text-sm font-medium rounded-full transition-colors flex items-center gap-1.5"
+            className="h-8 px-2.5 bg-blue-500 hover:bg-blue-400 text-white text-xs font-semibold rounded-full transition-colors flex items-center gap-1"
           >
             {selectedModels.length} Model{selectedModels.length !== 1 ? 's' : ''}
           </button>

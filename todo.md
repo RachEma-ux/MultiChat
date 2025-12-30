@@ -452,6 +452,11 @@
 - [x] Adjust Presets button styling: reduced padding (px-4 → px-3), smaller text (text-sm → text-xs), bolder font (font-medium → font-semibold)
 - [x] All 227 tests passing
 
+## ChatControlBox Models Button Width Reduction
+- [x] Reduce Models button padding and text size for more compact appearance (px-4→px-2.5, text-sm→text-xs, gap-1.5→gap-1)
+- [x] Test on mobile to verify spacing feels right
+- [x] All 227 tests passing
+
 ## ChatControlBox 17 Problems (FMF Framework Required)
 ### LAYOUT ISSUES
 - [x] 1. 3-Row Layout Instead of 2-Row - Fixed: Desktop single row, Mobile two rows
