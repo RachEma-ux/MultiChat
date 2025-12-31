@@ -877,21 +877,33 @@ export default function Home() {
                 isExpanded={expandedMenuGroups.has('hubs')}
                 onToggle={() => toggleMenuGroup('hubs')}
               />
-              <CollapsibleMenuGroup 
-                title="SETTINGS" 
-                items={['API Server', 'Item2', 'Item3']} 
+              <CollapsibleMenuGroup
+                title="SETTINGS"
+                items={['API Server', 'Item2', 'Item3']}
                 isExpanded={expandedMenuGroups.has('settings')}
                 onToggle={() => toggleMenuGroup('settings')}
               />
-              <CollapsibleMenuGroup 
-                title="DATABASE" 
-                items={['Item1', 'Item2', 'Item3']} 
+              <CollapsibleMenuGroup
+                title="THEME"
+                items={['Light Mode', 'Dark Mode', 'Auto']}
+                isExpanded={expandedMenuGroups.has('theme')}
+                onToggle={() => toggleMenuGroup('theme')}
+              />
+              <CollapsibleMenuGroup
+                title="WINDOWS"
+                items={['Window 1', 'Window 2', 'Layout Presets']}
+                isExpanded={expandedMenuGroups.has('windows')}
+                onToggle={() => toggleMenuGroup('windows')}
+              />
+              <CollapsibleMenuGroup
+                title="DATABASE"
+                items={['Item1', 'Item2', 'Item3']}
                 isExpanded={expandedMenuGroups.has('database')}
                 onToggle={() => toggleMenuGroup('database')}
               />
-              <CollapsibleMenuGroup 
-                title="SEARCH" 
-                items={['SearchXNG', 'Item2', 'Item3']} 
+              <CollapsibleMenuGroup
+                title="SEARCH"
+                items={['SearchXNG', 'Item2', 'Item3']}
                 isExpanded={expandedMenuGroups.has('search')}
                 onToggle={() => toggleMenuGroup('search')}
               />
