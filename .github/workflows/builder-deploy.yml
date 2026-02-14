@@ -50,19 +50,23 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: |
-          npm install --legacy-peer-deps || npm install
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build application
         run: |
-          npm run build || echo "No build script found"
+          pnpm run build || npm run build || echo "No build script found"
         env:
           NODE_OPTIONS: '--max-old-space-size=4096'
 
