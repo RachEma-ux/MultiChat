@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Reset Gist status
-        if: ${{ vars.TUNNEL_GIST_ID != '' && secrets.GIST_TOKEN != '' }}
+        if: ${{ vars.TUNNEL_GIST_ID != '' }}
         run: |
           GIST_ID="${{ vars.TUNNEL_GIST_ID }}"
           GIST_TOKEN="${{ secrets.GIST_TOKEN }}"
